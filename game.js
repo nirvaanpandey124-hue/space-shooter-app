@@ -45,16 +45,16 @@ const stars = Array.from({ length: 70 }, (_, index) => ({
 
 const player = {
     x: DESIGN_SIZE / 2,
-    y: DESIGN_SIZE - 60,
-    width: 28,
-    height: 36,
+    y: DESIGN_SIZE - 50,
+    width: 30,
+    height: 30,
     speed: BASE_PLAYER_SPEED,
 };
 const bullet = {
     x: 0,
     y: 0,
-    width: 6,
-    height: 12,
+    width: 7,
+    height: 14,
     speed: BASE_BULLET_SPEED + 2,
     active: false,
 };
@@ -207,15 +207,15 @@ function resetGame() {
     score = 0;
     level = 1;
     player.x = DESIGN_SIZE / 2;
-    player.y = DESIGN_SIZE - 60;
-    player.width = 28;
-    player.height = 36;
+    player.y = DESIGN_SIZE - 50;
+    player.width = 30;
+    player.height = 30;
     player.speed = BASE_PLAYER_SPEED;
     bullet.active = false;
     bullet.x = 0;
     bullet.y = 0;
-    bullet.width = 6;
-    bullet.height = 12;
+    bullet.width = 7;
+    bullet.height = 14;
     bullet.speed = BASE_BULLET_SPEED + 2;
     spawnEnemies(level);
     startScreen.hidden = true;
@@ -295,7 +295,7 @@ function fireBullet() {
     if (!gameStarted || paused || gameOver || bullet.active) return;
     bullet.active = true;
     bullet.x = player.x;
-    bullet.y = player.y - 20;
+    bullet.y = player.y - player.height / 2 - bullet.height / 2 - 4;
 }
 
 function updateDifficulty() {
@@ -320,7 +320,7 @@ function update() {
 
     if (leftPressed) player.x -= player.speed;
     if (rightPressed) player.x += player.speed;
-    player.x = Math.max(10, Math.min(DESIGN_SIZE - 10, player.x));
+    player.x = Math.max(player.width / 2, Math.min(DESIGN_SIZE - player.width / 2, player.x));
 
     if (bullet.active) {
         bullet.y -= bullet.speed;
@@ -366,11 +366,13 @@ function finishGame() {
 function drawPlayer() {
     const x = player.x;
     const y = player.y;
+    const drawWidth = 28;
+    const drawHeight = 36;
     ctx.fillStyle = '#00ffff';
     ctx.beginPath();
-    ctx.moveTo(x, y - player.height / 2);
-    ctx.lineTo(x - player.width / 2, y + player.height / 2);
-    ctx.lineTo(x + player.width / 2, y + player.height / 2);
+    ctx.moveTo(x, y - drawHeight / 2);
+    ctx.lineTo(x - drawWidth / 2, y + drawHeight / 2);
+    ctx.lineTo(x + drawWidth / 2, y + drawHeight / 2);
     ctx.closePath();
     ctx.fill();
 }
@@ -397,7 +399,7 @@ function draw() {
     for (const enemy of enemies) drawEnemy(enemy);
     if (bullet.active) {
         ctx.fillStyle = '#ffd700';
-        ctx.fillRect(bullet.x - bullet.width / 2, bullet.y - bullet.height, bullet.width, bullet.height);
+        ctx.fillRect(bullet.x - 3, bullet.y - 6, 6, 12);
     }
     drawPlayer();
 }
