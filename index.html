@@ -168,6 +168,11 @@
             color: #ffe56b;
         }
 
+        .touch-controls button[data-pause] {
+            width: 68px;
+            font-size: .8rem;
+        }
+
         @media (max-width: 480px) {
             .controls { justify-content: center; gap: 8px; }
             .control-hint { display: none; }
@@ -175,6 +180,7 @@
             .touch-controls { gap: 8px; }
             .touch-controls button { width: 52px; }
             .touch-controls button[data-fire] { width: 76px; }
+            .touch-controls button[data-pause] { width: 60px; }
         }
     </style>
 </head>
@@ -196,11 +202,18 @@
                 <p id="final-score">Score: 0</p>
                 <button id="restart-button" type="button">Play again</button>
             </div>
+            <div class="overlay" id="paused-screen" hidden>
+                <p class="eyebrow">Mini Shooter</p>
+                <h2>Paused</h2>
+                <p>Game paused</p>
+                <button id="resume-button" type="button">Resume</button>
+            </div>
         </section>
 
         <footer class="controls">
-            <div class="control-hint"><span class="control-keys">← →</span> move <span aria-hidden="true">·</span> <span class="control-keys">Space</span> fire</div>
+            <div class="control-hint"><span class="control-keys">← →</span> move <span aria-hidden="true">·</span> <span class="control-keys">Space</span> fire <span aria-hidden="true">·</span> <span class="control-keys">P</span> pause</div>
             <div class="touch-controls" aria-label="Touch controls">
+                <button type="button" id="pause-button" data-pause aria-label="Pause game" aria-pressed="false">Pause</button>
                 <button type="button" id="fire-button" aria-label="Hold to fire">Fire</button>
             </div>
             <div>Drag to move</div>
@@ -211,8 +224,11 @@
         const context = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
         const gameOverScreen = document.getElementById('game-over');
+        const pausedScreen = document.getElementById('paused-screen');
         const finalScore = document.getElementById('final-score');
         const restartButton = document.getElementById('restart-button');
+        const resumeButton = document.getElementById('resume-button');
+        const pauseButton = document.getElementById('pause-button');
         const fireButton = document.getElementById('fire-button');
 
         const SIZE = 600;
@@ -227,11 +243,75 @@
         const bullet = { x: SIZE / 2, y: SIZE / 2, active: false, speed: 20 };
         let score = 0;
         let gameOver = false;
+        let paused = false;
         let fireHeld = false;
         let dragPointer = null;
         let dragOffset = 0;
         let previousTime = 0;
         let accumulator = 0;
+        let audioContext = null;
+        let musicTimer = null;
+        let musicStep = 0;
+        const musicNotes = [261.63, 329.63, 392, 329.63, 293.66, 349.23, 440, 349.23];
+
+        function playMusicNote() {
+            if (!audioContext || audioContext.state !== 'running' || paused || gameOver) return;
+            const now = audioContext.currentTime;
+            const oscillator = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(musicNotes[musicStep], now);
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.055, now + 0.025);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.23);
+            oscillator.connect(gain).connect(audioContext.destination);
+            oscillator.start(now);
+            oscillator.stop(now + 0.24);
+            musicStep = (musicStep + 1) % musicNotes.length;
+        }
+
+        function startMusic() {
+            if (!audioContext || paused || gameOver || musicTimer !== null) return;
+            playMusicNote();
+            musicTimer = window.setInterval(playMusicNote, 260);
+        }
+
+        function stopMusic() {
+            if (musicTimer === null) return;
+            window.clearInterval(musicTimer);
+            musicTimer = null;
+        }
+
+        function unlockAudio() {
+            if (!audioContext) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextClass) return;
+                try {
+                    audioContext = new AudioContextClass();
+                } catch {
+                    return;
+                }
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().catch(() => {});
+            }
+            startMusic();
+        }
+
+        function playDeathSound() {
+            if (!audioContext || audioContext.state !== 'running') return;
+            const now = audioContext.currentTime;
+            const oscillator = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(180, now);
+            oscillator.frequency.exponentialRampToValueAtTime(60, now + 0.45);
+            gain.gain.setValueAtTime(0.16, now);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.48);
+            oscillator.connect(gain).connect(audioContext.destination);
+            oscillator.start(now);
+            oscillator.stop(now + 0.5);
+        }
 
         function respawnEnemy() {
             enemy.x = 50 + Math.floor(Math.random() * 501);
@@ -244,11 +324,35 @@
             player.x = SIZE / 2;
             bullet.active = false;
             gameOver = false;
+            paused = false;
             fireHeld = false;
             respawnEnemy();
             gameOverScreen.hidden = true;
+            pausedScreen.hidden = true;
+            pauseButton.textContent = 'Pause';
+            pauseButton.setAttribute('aria-label', 'Pause game');
+            pauseButton.setAttribute('aria-pressed', 'false');
             previousTime = 0;
             accumulator = 0;
+            startMusic();
+        }
+
+        function setPaused(nextPaused) {
+            if (gameOver) return;
+            paused = nextPaused;
+            pausedScreen.hidden = !paused;
+            pauseButton.textContent = paused ? 'Resume' : 'Pause';
+            pauseButton.setAttribute('aria-label', paused ? 'Resume game' : 'Pause game');
+            pauseButton.setAttribute('aria-pressed', String(paused));
+            previousTime = 0;
+            accumulator = 0;
+            if (paused) {
+                fireHeld = false;
+                dragPointer = null;
+                stopMusic();
+            } else {
+                startMusic();
+            }
         }
 
         function movePlayer(direction) {
@@ -267,7 +371,11 @@
 
         function finishGame() {
             gameOver = true;
+            paused = false;
             fireHeld = false;
+            stopMusic();
+            pausedScreen.hidden = true;
+            playDeathSound();
             finalScore.textContent = `Score: ${score}`;
             gameOverScreen.hidden = false;
         }
@@ -320,14 +428,17 @@
 
         function frame(time) {
             if (!previousTime) previousTime = time;
-            accumulator += Math.min((time - previousTime) / 1000, 0.05);
+            const elapsed = Math.min((time - previousTime) / 1000, 0.05);
             previousTime = time;
 
-            if (!gameOver) {
+            if (!gameOver && !paused) {
+                accumulator += elapsed;
                 while (accumulator >= FIXED_STEP) {
                     update();
                     accumulator -= FIXED_STEP;
                 }
+            } else {
+                accumulator = 0;
             }
 
             draw();
@@ -340,11 +451,17 @@
         }
 
         function handleKeyDown(event) {
-            if (['ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) event.preventDefault();
+            unlockAudio();
+            if (['ArrowLeft', 'ArrowRight', 'Space', 'KeyP'].includes(event.code)) event.preventDefault();
             if (gameOver) {
                 if (event.code === 'Enter') restartGame();
                 return;
             }
+            if (event.code === 'KeyP') {
+                setPaused(!paused);
+                return;
+            }
+            if (paused) return;
 
             if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
                 movePlayer(event.code === 'ArrowLeft' ? -1 : 1);
@@ -358,7 +475,7 @@
         }
 
         canvas.addEventListener('pointerdown', (event) => {
-            if (gameOver) return;
+            if (gameOver || paused) return;
             event.preventDefault();
             dragPointer = event.pointerId;
             dragOffset = player.x - canvasX(event);
@@ -366,7 +483,7 @@
         });
 
         canvas.addEventListener('pointermove', (event) => {
-            if (dragPointer !== event.pointerId || gameOver) return;
+            if (dragPointer !== event.pointerId || gameOver || paused) return;
             player.x = Math.max(20, Math.min(580, canvasX(event) + dragOffset));
         });
         canvas.addEventListener('pointerup', stopDragging);
@@ -374,6 +491,7 @@
 
         fireButton.addEventListener('pointerdown', (event) => {
             event.preventDefault();
+            if (paused || gameOver) return;
             fireButton.setPointerCapture(event.pointerId);
             fireHeld = true;
             fireBullet();
@@ -382,7 +500,10 @@
         fireButton.addEventListener('pointercancel', () => { fireHeld = false; });
         fireButton.addEventListener('lostpointercapture', () => { fireHeld = false; });
 
+        pauseButton.addEventListener('click', () => setPaused(!paused));
+        resumeButton.addEventListener('click', () => setPaused(false));
         restartButton.addEventListener('click', restartGame);
+        window.addEventListener('pointerdown', unlockAudio, { once: true });
         window.addEventListener('keydown', handleKeyDown);
 
         respawnEnemy();
