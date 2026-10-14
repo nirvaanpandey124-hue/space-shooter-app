@@ -58,7 +58,7 @@
 
         .score {
             min-width: 90px;
-            color: #a8b8be;
+            color: #ffffff;
             font-size: .8rem;
             text-align: right;
             text-transform: uppercase;
@@ -66,7 +66,7 @@
 
         .score strong {
             display: block;
-            color: #ffe56b;
+            color: #ffffff;
             font-size: 1.4rem;
             line-height: 1.1;
         }
@@ -224,7 +224,7 @@
 
         const player = { x: SIZE / 2, y: SIZE - 50 };
         const enemy = { x: 300, y: 50, radius: 10, speed: 3 };
-        const bullet = { x: 0, y: 0, active: false, speed: 20 };
+        const bullet = { x: SIZE / 2, y: SIZE / 2, active: false, speed: 20 };
         let score = 0;
         let gameOver = false;
         let fireHeld = false;
@@ -252,8 +252,10 @@
         }
 
         function movePlayer(direction) {
-            player.x += direction * 20;
-            player.x = Math.max(20, Math.min(580, player.x));
+            const nextX = player.x + direction * 20;
+            if ((direction < 0 && nextX > 20) || (direction > 0 && nextX < 580)) {
+                player.x = nextX;
+            }
         }
 
         function fireBullet() {
@@ -279,8 +281,10 @@
                 if (bullet.y < 0) bullet.active = false;
             }
 
-            if (bullet.active && Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y) < 20) {
+            if (Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y) < 20) {
                 bullet.active = false;
+                bullet.x = SIZE / 2;
+                bullet.y = SIZE + 100;
                 score += 1;
                 scoreElement.textContent = String(score);
                 respawnEnemy();
