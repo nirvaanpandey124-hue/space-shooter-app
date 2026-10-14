@@ -71,11 +71,45 @@
             line-height: 1.1;
         }
 
+        .hud {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .level-readout {
+            min-width: 112px;
+            color: #a8b8be;
+            font-size: .7rem;
+            text-align: right;
+            text-transform: uppercase;
+        }
+
+        .level-readout strong {
+            display: block;
+            color: #83d9d2;
+            font-size: 1rem;
+        }
+
+        .progress-track {
+            width: 112px;
+            height: 4px;
+            margin-top: 5px;
+            background: #27383e;
+        }
+
+        .progress-fill {
+            width: 0;
+            height: 100%;
+            background: #83d9d2;
+            transition: width 100ms linear;
+        }
+
         .stage {
             position: relative;
             overflow: hidden;
-            width: min(100%, calc(100vh - 180px));
-            width: min(100%, calc(100dvh - 180px));
+            width: min(100%, 600px, calc(100dvh - 210px));
+            min-width: 0;
             margin-inline: auto;
             aspect-ratio: 1;
             border: 1px solid #27383e;
@@ -134,6 +168,19 @@
 
         .overlay button { min-width: 150px; padding: 0 20px; }
 
+        .overlay-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .overlay .secondary-action {
+            border-color: #52656b;
+            background: #101a1e;
+            color: #e9f3f4;
+        }
+
         .controls {
             display: flex;
             justify-content: space-between;
@@ -148,6 +195,8 @@
 
         .touch-controls {
             display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 6px;
             flex: 0 0 auto;
         }
@@ -168,19 +217,38 @@
             color: #ffe56b;
         }
 
-        .touch-controls button[data-pause] {
-            width: 68px;
-            font-size: .8rem;
+        .touch-controls button[data-action] {
+            width: 48px;
+            font-size: .72rem;
         }
 
+        .touch-controls button[data-action="pause"] { width: 58px; }
+
+        .touch-controls button[data-move] { font-size: 1.05rem; }
+
         @media (max-width: 480px) {
-            .controls { justify-content: center; gap: 8px; }
+            body { padding: 8px; }
+            main { width: 100%; }
+            header { gap: 8px; }
+            h1 { font-size: 1.3rem; }
+            .hud { gap: 8px; }
+            .score { min-width: 48px; font-size: .66rem; }
+            .score strong { font-size: 1.15rem; }
+            .level-readout { min-width: 72px; font-size: .62rem; }
+            .level-readout strong { font-size: .9rem; }
+            .progress-track { width: 72px; }
+            .stage { width: min(100%, calc(100dvh - 210px)); }
+            .controls { justify-content: center; gap: 8px; padding-top: 10px; }
             .control-hint { display: none; }
             .controls > div:last-child { display: none; }
             .touch-controls { gap: 8px; }
-            .touch-controls button { width: 52px; }
-            .touch-controls button[data-fire] { width: 76px; }
-            .touch-controls button[data-pause] { width: 60px; }
+            .touch-controls { gap: 5px; }
+            .touch-controls button { width: 38px; height: 44px; }
+            .touch-controls button[data-move] { width: 40px; }
+            .touch-controls button[data-fire] { width: 68px; }
+            .touch-controls button[data-action] { width: 38px; }
+            .touch-controls button[data-action="pause"] { width: 48px; }
+            .overlay h2 { font-size: 2rem; }
         }
     </style>
 </head>
@@ -191,323 +259,50 @@
                 <p class="eyebrow">Arcade / 01</p>
                 <h1>Mini Shooter</h1>
             </div>
-            <div class="score" aria-live="polite">Score<strong id="score">0</strong></div>
+            <div class="hud" aria-live="polite">
+                <div class="score">Score<strong id="score">0</strong></div>
+                <div class="level-readout">Level<strong id="level">1 / 15</strong><div class="progress-track"><div class="progress-fill" id="level-progress"></div></div></div>
+            </div>
         </header>
 
         <section class="stage" aria-label="Mini Shooter game">
             <canvas id="game" width="600" height="600" aria-label="Game field"></canvas>
+            <div class="overlay" id="start-screen">
+                <p class="eyebrow">Arcade / Space Shooter</p>
+                <h2>Launch</h2>
+                <p>Clear incoming ships. Every four hits brings a faster wave.</p>
+                <button id="start-button" type="button">Start game</button>
+            </div>
+            <div class="overlay" id="paused-screen" hidden>
+                <p class="eyebrow">Flight suspended</p>
+                <h2>Paused</h2>
+                <p>Press P or resume when you are ready.</p>
+                <button id="resume-button" type="button">Resume</button>
+            </div>
             <div class="overlay" id="game-over" hidden>
                 <p class="eyebrow">Mini Shooter</p>
                 <h2>Game over</h2>
                 <p id="final-score">Score: 0</p>
-                <button id="restart-button" type="button">Play again</button>
-            </div>
-            <div class="overlay" id="paused-screen" hidden>
-                <p class="eyebrow">Mini Shooter</p>
-                <h2>Paused</h2>
-                <p>Game paused</p>
-                <button id="resume-button" type="button">Resume</button>
+                <div class="overlay-actions">
+                    <button id="restart-button" type="button">Play again</button>
+                    <button class="secondary-action" id="game-menu-button" type="button">Menu</button>
+                </div>
             </div>
         </section>
 
         <footer class="controls">
-            <div class="control-hint"><span class="control-keys">← →</span> move <span aria-hidden="true">·</span> <span class="control-keys">Space</span> fire <span aria-hidden="true">·</span> <span class="control-keys">P</span> pause</div>
+            <div class="control-hint"><span class="control-keys">← → / A D</span> move <span aria-hidden="true">·</span> <span class="control-keys">Space</span> fire <span aria-hidden="true">·</span> <span class="control-keys">P</span> pause</div>
             <div class="touch-controls" aria-label="Touch controls">
-                <button type="button" id="pause-button" data-pause aria-label="Pause game" aria-pressed="false">Pause</button>
-                <button type="button" id="fire-button" aria-label="Hold to fire">Fire</button>
+                <button type="button" data-move="-1" aria-label="Move left">←</button>
+                <button type="button" data-move="1" aria-label="Move right">→</button>
+                <button type="button" id="fire-button" data-fire aria-label="Hold to fire">Fire</button>
+                <button type="button" id="pause-button" data-action="pause" aria-label="Pause game" aria-pressed="false">Pause</button>
+                <button type="button" id="reset-button" data-action="reset" aria-label="Reset game">Reset</button>
+                <button type="button" id="menu-button" data-action="menu" aria-label="Return to menu">Menu</button>
             </div>
             <div>Drag to move</div>
         </footer>
     </main>
-    <script>
-        const canvas = document.getElementById('game');
-        const context = canvas.getContext('2d');
-        const scoreElement = document.getElementById('score');
-        const gameOverScreen = document.getElementById('game-over');
-        const pausedScreen = document.getElementById('paused-screen');
-        const finalScore = document.getElementById('final-score');
-        const restartButton = document.getElementById('restart-button');
-        const resumeButton = document.getElementById('resume-button');
-        const pauseButton = document.getElementById('pause-button');
-        const fireButton = document.getElementById('fire-button');
-
-        const SIZE = 600;
-        const FIXED_STEP = 1 / 60;
-        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = SIZE * pixelRatio;
-        canvas.height = SIZE * pixelRatio;
-        context.scale(pixelRatio, pixelRatio);
-
-        const player = { x: SIZE / 2, y: SIZE - 50 };
-        const enemy = { x: 300, y: 50, radius: 10, speed: 3 };
-        const bullet = { x: SIZE / 2, y: SIZE / 2, active: false, speed: 20 };
-        let score = 0;
-        let gameOver = false;
-        let paused = false;
-        let fireHeld = false;
-        let dragPointer = null;
-        let dragOffset = 0;
-        let previousTime = 0;
-        let accumulator = 0;
-        let audioContext = null;
-        let musicTimer = null;
-        let musicStep = 0;
-        const musicNotes = [261.63, 329.63, 392, 329.63, 293.66, 349.23, 440, 349.23];
-
-        function playMusicNote() {
-            if (!audioContext || audioContext.state !== 'running' || paused || gameOver) return;
-            const now = audioContext.currentTime;
-            const oscillator = audioContext.createOscillator();
-            const gain = audioContext.createGain();
-            oscillator.type = 'triangle';
-            oscillator.frequency.setValueAtTime(musicNotes[musicStep], now);
-            gain.gain.setValueAtTime(0.0001, now);
-            gain.gain.exponentialRampToValueAtTime(0.055, now + 0.025);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.23);
-            oscillator.connect(gain).connect(audioContext.destination);
-            oscillator.start(now);
-            oscillator.stop(now + 0.24);
-            musicStep = (musicStep + 1) % musicNotes.length;
-        }
-
-        function startMusic() {
-            if (!audioContext || paused || gameOver || musicTimer !== null) return;
-            playMusicNote();
-            musicTimer = window.setInterval(playMusicNote, 260);
-        }
-
-        function stopMusic() {
-            if (musicTimer === null) return;
-            window.clearInterval(musicTimer);
-            musicTimer = null;
-        }
-
-        function unlockAudio() {
-            if (!audioContext) {
-                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                if (!AudioContextClass) return;
-                try {
-                    audioContext = new AudioContextClass();
-                } catch {
-                    return;
-                }
-            }
-            if (audioContext.state === 'suspended') {
-                audioContext.resume().catch(() => {});
-            }
-            startMusic();
-        }
-
-        function playDeathSound() {
-            if (!audioContext || audioContext.state !== 'running') return;
-            const now = audioContext.currentTime;
-            const oscillator = audioContext.createOscillator();
-            const gain = audioContext.createGain();
-            oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(180, now);
-            oscillator.frequency.exponentialRampToValueAtTime(60, now + 0.45);
-            gain.gain.setValueAtTime(0.16, now);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.48);
-            oscillator.connect(gain).connect(audioContext.destination);
-            oscillator.start(now);
-            oscillator.stop(now + 0.5);
-        }
-
-        function respawnEnemy() {
-            enemy.x = 50 + Math.floor(Math.random() * 501);
-            enemy.y = 50;
-        }
-
-        function restartGame() {
-            score = 0;
-            scoreElement.textContent = '0';
-            player.x = SIZE / 2;
-            bullet.active = false;
-            gameOver = false;
-            paused = false;
-            fireHeld = false;
-            respawnEnemy();
-            gameOverScreen.hidden = true;
-            pausedScreen.hidden = true;
-            pauseButton.textContent = 'Pause';
-            pauseButton.setAttribute('aria-label', 'Pause game');
-            pauseButton.setAttribute('aria-pressed', 'false');
-            previousTime = 0;
-            accumulator = 0;
-            startMusic();
-        }
-
-        function setPaused(nextPaused) {
-            if (gameOver) return;
-            paused = nextPaused;
-            pausedScreen.hidden = !paused;
-            pauseButton.textContent = paused ? 'Resume' : 'Pause';
-            pauseButton.setAttribute('aria-label', paused ? 'Resume game' : 'Pause game');
-            pauseButton.setAttribute('aria-pressed', String(paused));
-            previousTime = 0;
-            accumulator = 0;
-            if (paused) {
-                fireHeld = false;
-                dragPointer = null;
-                stopMusic();
-            } else {
-                startMusic();
-            }
-        }
-
-        function movePlayer(direction) {
-            const nextX = player.x + direction * 20;
-            if ((direction < 0 && nextX > 20) || (direction > 0 && nextX < 580)) {
-                player.x = nextX;
-            }
-        }
-
-        function fireBullet() {
-            if (gameOver || bullet.active) return;
-            bullet.x = player.x;
-            bullet.y = player.y - 10;
-            bullet.active = true;
-        }
-
-        function finishGame() {
-            gameOver = true;
-            paused = false;
-            fireHeld = false;
-            stopMusic();
-            pausedScreen.hidden = true;
-            playDeathSound();
-            finalScore.textContent = `Score: ${score}`;
-            gameOverScreen.hidden = false;
-        }
-
-        function update() {
-            enemy.y += enemy.speed;
-            if (enemy.y > SIZE) respawnEnemy();
-
-            if (bullet.active) {
-                bullet.y -= bullet.speed;
-                if (bullet.y < 0) bullet.active = false;
-            }
-
-            if (Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y) < 20) {
-                bullet.active = false;
-                bullet.x = SIZE / 2;
-                bullet.y = SIZE + 100;
-                score += 1;
-                scoreElement.textContent = String(score);
-                respawnEnemy();
-            }
-
-            if (fireHeld && !bullet.active) fireBullet();
-
-            if (Math.hypot(player.x - enemy.x, player.y - enemy.y) < 25) finishGame();
-        }
-
-        function draw() {
-            context.fillStyle = '#000000';
-            context.fillRect(0, 0, SIZE, SIZE);
-
-            context.fillStyle = '#ff0000';
-            context.beginPath();
-            context.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
-            context.fill();
-
-            if (bullet.active) {
-                context.fillStyle = '#ffff00';
-                context.fillRect(bullet.x - 3, bullet.y - 10, 6, 20);
-            }
-
-            context.fillStyle = '#00ffff';
-            context.beginPath();
-            context.moveTo(player.x, player.y - 10);
-            context.lineTo(player.x + 10, player.y + 10);
-            context.lineTo(player.x - 10, player.y + 10);
-            context.closePath();
-            context.fill();
-        }
-
-        function frame(time) {
-            if (!previousTime) previousTime = time;
-            const elapsed = Math.min((time - previousTime) / 1000, 0.05);
-            previousTime = time;
-
-            if (!gameOver && !paused) {
-                accumulator += elapsed;
-                while (accumulator >= FIXED_STEP) {
-                    update();
-                    accumulator -= FIXED_STEP;
-                }
-            } else {
-                accumulator = 0;
-            }
-
-            draw();
-            requestAnimationFrame(frame);
-        }
-
-        function canvasX(event) {
-            const bounds = canvas.getBoundingClientRect();
-            return ((event.clientX - bounds.left) / bounds.width) * SIZE;
-        }
-
-        function handleKeyDown(event) {
-            unlockAudio();
-            if (['ArrowLeft', 'ArrowRight', 'Space', 'KeyP'].includes(event.code)) event.preventDefault();
-            if (gameOver) {
-                if (event.code === 'Enter') restartGame();
-                return;
-            }
-            if (event.code === 'KeyP') {
-                setPaused(!paused);
-                return;
-            }
-            if (paused) return;
-
-            if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
-                movePlayer(event.code === 'ArrowLeft' ? -1 : 1);
-            }
-            if (event.code === 'Space' && !event.repeat) fireBullet();
-        }
-
-        function stopDragging(event) {
-            if (dragPointer !== event.pointerId) return;
-            dragPointer = null;
-        }
-
-        canvas.addEventListener('pointerdown', (event) => {
-            if (gameOver || paused) return;
-            event.preventDefault();
-            dragPointer = event.pointerId;
-            dragOffset = player.x - canvasX(event);
-            canvas.setPointerCapture(event.pointerId);
-        });
-
-        canvas.addEventListener('pointermove', (event) => {
-            if (dragPointer !== event.pointerId || gameOver || paused) return;
-            player.x = Math.max(20, Math.min(580, canvasX(event) + dragOffset));
-        });
-        canvas.addEventListener('pointerup', stopDragging);
-        canvas.addEventListener('pointercancel', stopDragging);
-
-        fireButton.addEventListener('pointerdown', (event) => {
-            event.preventDefault();
-            if (paused || gameOver) return;
-            fireButton.setPointerCapture(event.pointerId);
-            fireHeld = true;
-            fireBullet();
-        });
-        fireButton.addEventListener('pointerup', () => { fireHeld = false; });
-        fireButton.addEventListener('pointercancel', () => { fireHeld = false; });
-        fireButton.addEventListener('lostpointercapture', () => { fireHeld = false; });
-
-        pauseButton.addEventListener('click', () => setPaused(!paused));
-        resumeButton.addEventListener('click', () => setPaused(false));
-        restartButton.addEventListener('click', restartGame);
-        window.addEventListener('pointerdown', unlockAudio, { once: true });
-        window.addEventListener('keydown', handleKeyDown);
-
-        respawnEnemy();
-        requestAnimationFrame(frame);
-    </script>
+    <script src="game.js" defer></script>
 </body>
 </html>
