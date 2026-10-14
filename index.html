@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080d12">
+    <title>Mini Shooter</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+            background: #080d12;
+            color: #e9f3f4;
+            font-synthesis: none;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-width: 0;
+            min-height: 100vh;
+            min-height: 100dvh;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            padding: 12px;
+            background:
+                radial-gradient(ellipse at 50% 0%, rgba(18, 58, 65, .28), transparent 55%),
+                #080d12;
+        }
+
+        main {
+            width: min(100%, 600px);
+        }
+
+        header {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 16px;
+            margin: 0 0 10px;
+        }
+
+        h1 {
+            margin: 0;
+            color: #f1f8f7;
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        .eyebrow {
+            margin: 0 0 5px;
+            color: #83d9d2;
+            font-size: .7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .score {
+            min-width: 90px;
+            color: #a8b8be;
+            font-size: .8rem;
+            text-align: right;
+            text-transform: uppercase;
+        }
+
+        .score strong {
+            display: block;
+            color: #ffe56b;
+            font-size: 1.4rem;
+            line-height: 1.1;
+        }
+
+        .stage {
+            position: relative;
+            overflow: hidden;
+            width: min(100%, calc(100vh - 180px));
+            width: min(100%, calc(100dvh - 180px));
+            margin-inline: auto;
+            aspect-ratio: 1;
+            border: 1px solid #27383e;
+            background: #030609;
+            box-shadow: 0 20px 70px rgba(0, 0, 0, .38);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            align-content: center;
+            justify-items: center;
+            gap: 14px;
+            padding: 24px;
+            background: rgba(3, 8, 11, .84);
+            text-align: center;
+        }
+
+        .overlay[hidden] { display: none; }
+
+        .overlay h2 {
+            margin: 0;
+            font-size: 2.4rem;
+            line-height: 1;
+        }
+
+        .overlay p {
+            max-width: 28rem;
+            margin: 0;
+            color: #adbec2;
+            line-height: 1.55;
+        }
+
+        button {
+            min-height: 44px;
+            border: 1px solid #83d9d2;
+            border-radius: 3px;
+            background: #83d9d2;
+            color: #071114;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        button:hover { background: #a3eee5; }
+        button:focus-visible { outline: 3px solid #ffe56b; outline-offset: 3px; }
+
+        .overlay button { min-width: 150px; padding: 0 20px; }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding-top: 14px;
+            color: #9eafb4;
+            font-size: .82rem;
+        }
+
+        .control-keys { color: #e9f3f4; }
+
+        .touch-controls {
+            display: flex;
+            gap: 6px;
+            flex: 0 0 auto;
+        }
+
+        .touch-controls button {
+            width: 54px;
+            height: 48px;
+            padding: 0;
+            border-color: #34494f;
+            background: #101a1e;
+            color: #e9f3f4;
+            font-size: 1.1rem;
+        }
+
+        .touch-controls button[data-fire] {
+            width: 84px;
+            border-color: #bca642;
+            color: #ffe56b;
+        }
+
+        @media (max-width: 480px) {
+            .controls { justify-content: center; gap: 8px; }
+            .control-hint { display: none; }
+            .controls > div:last-child { display: none; }
+            .touch-controls { gap: 8px; }
+            .touch-controls button { width: 52px; }
+            .touch-controls button[data-fire] { width: 76px; }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <div>
+                <p class="eyebrow">Arcade / 01</p>
+                <h1>Mini Shooter</h1>
+            </div>
+            <div class="score" aria-live="polite">Score<strong id="score">0</strong></div>
+        </header>
+
+        <section class="stage" aria-label="Mini Shooter game">
+            <canvas id="game" width="600" height="600" aria-label="Game field"></canvas>
+            <div class="overlay" id="game-over" hidden>
+                <p class="eyebrow">Mini Shooter</p>
+                <h2>Game over</h2>
+                <p id="final-score">Score: 0</p>
+                <button id="restart-button" type="button">Play again</button>
+            </div>
+        </section>
+
+        <footer class="controls">
+            <div class="control-hint"><span class="control-keys">← →</span> move <span aria-hidden="true">·</span> <span class="control-keys">Space</span> fire</div>
+            <div class="touch-controls" aria-label="Touch controls">
+                <button type="button" id="fire-button" aria-label="Hold to fire">Fire</button>
+            </div>
+            <div>Drag to move</div>
+        </footer>
+    </main>
+    <script>
+        const canvas = document.getElementById('game');
+        const context = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScore = document.getElementById('final-score');
+        const restartButton = document.getElementById('restart-button');
+        const fireButton = document.getElementById('fire-button');
+
+        const SIZE = 600;
+        const FIXED_STEP = 1 / 60;
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = SIZE * pixelRatio;
+        canvas.height = SIZE * pixelRatio;
+        context.scale(pixelRatio, pixelRatio);
+
+        const player = { x: SIZE / 2, y: SIZE - 50 };
+        const enemy = { x: 300, y: 50, radius: 10, speed: 3 };
+        const bullet = { x: 0, y: 0, active: false, speed: 20 };
+        let score = 0;
+        let gameOver = false;
+        let fireHeld = false;
+        let dragPointer = null;
+        let dragOffset = 0;
+        let previousTime = 0;
+        let accumulator = 0;
+
+        function respawnEnemy() {
+            enemy.x = 50 + Math.floor(Math.random() * 501);
+            enemy.y = 50;
+        }
+
+        function restartGame() {
+            score = 0;
+            scoreElement.textContent = '0';
+            player.x = SIZE / 2;
+            bullet.active = false;
+            gameOver = false;
+            fireHeld = false;
+            respawnEnemy();
+            gameOverScreen.hidden = true;
+            previousTime = 0;
+            accumulator = 0;
+        }
+
+        function movePlayer(direction) {
+            player.x += direction * 20;
+            player.x = Math.max(20, Math.min(580, player.x));
+        }
+
+        function fireBullet() {
+            if (gameOver || bullet.active) return;
+            bullet.x = player.x;
+            bullet.y = player.y - 10;
+            bullet.active = true;
+        }
+
+        function finishGame() {
+            gameOver = true;
+            fireHeld = false;
+            finalScore.textContent = `Score: ${score}`;
+            gameOverScreen.hidden = false;
+        }
+
+        function update() {
+            enemy.y += enemy.speed;
+            if (enemy.y > SIZE) respawnEnemy();
+
+            if (bullet.active) {
+                bullet.y -= bullet.speed;
+                if (bullet.y < 0) bullet.active = false;
+            }
+
+            if (bullet.active && Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y) < 20) {
+                bullet.active = false;
+                score += 1;
+                scoreElement.textContent = String(score);
+                respawnEnemy();
+            }
+
+            if (fireHeld && !bullet.active) fireBullet();
+
+            if (Math.hypot(player.x - enemy.x, player.y - enemy.y) < 25) finishGame();
+        }
+
+        function draw() {
+            context.fillStyle = '#000000';
+            context.fillRect(0, 0, SIZE, SIZE);
+
+            context.fillStyle = '#ff0000';
+            context.beginPath();
+            context.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+            context.fill();
+
+            if (bullet.active) {
+                context.fillStyle = '#ffff00';
+                context.fillRect(bullet.x - 3, bullet.y - 10, 6, 20);
+            }
+
+            context.fillStyle = '#00ffff';
+            context.beginPath();
+            context.moveTo(player.x, player.y - 10);
+            context.lineTo(player.x + 10, player.y + 10);
+            context.lineTo(player.x - 10, player.y + 10);
+            context.closePath();
+            context.fill();
+        }
+
+        function frame(time) {
+            if (!previousTime) previousTime = time;
+            accumulator += Math.min((time - previousTime) / 1000, 0.05);
+            previousTime = time;
+
+            if (!gameOver) {
+                while (accumulator >= FIXED_STEP) {
+                    update();
+                    accumulator -= FIXED_STEP;
+                }
+            }
+
+            draw();
+            requestAnimationFrame(frame);
+        }
+
+        function canvasX(event) {
+            const bounds = canvas.getBoundingClientRect();
+            return ((event.clientX - bounds.left) / bounds.width) * SIZE;
+        }
+
+        function handleKeyDown(event) {
+            if (['ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) event.preventDefault();
+            if (gameOver) {
+                if (event.code === 'Enter') restartGame();
+                return;
+            }
+
+            if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
+                movePlayer(event.code === 'ArrowLeft' ? -1 : 1);
+            }
+            if (event.code === 'Space' && !event.repeat) fireBullet();
+        }
+
+        function stopDragging(event) {
+            if (dragPointer !== event.pointerId) return;
+            dragPointer = null;
+        }
+
+        canvas.addEventListener('pointerdown', (event) => {
+            if (gameOver) return;
+            event.preventDefault();
+            dragPointer = event.pointerId;
+            dragOffset = player.x - canvasX(event);
+            canvas.setPointerCapture(event.pointerId);
+        });
+
+        canvas.addEventListener('pointermove', (event) => {
+            if (dragPointer !== event.pointerId || gameOver) return;
+            player.x = Math.max(20, Math.min(580, canvasX(event) + dragOffset));
+        });
+        canvas.addEventListener('pointerup', stopDragging);
+        canvas.addEventListener('pointercancel', stopDragging);
+
+        fireButton.addEventListener('pointerdown', (event) => {
+            event.preventDefault();
+            fireButton.setPointerCapture(event.pointerId);
+            fireHeld = true;
+            fireBullet();
+        });
+        fireButton.addEventListener('pointerup', () => { fireHeld = false; });
+        fireButton.addEventListener('pointercancel', () => { fireHeld = false; });
+        fireButton.addEventListener('lostpointercapture', () => { fireHeld = false; });
+
+        restartButton.addEventListener('click', restartGame);
+        window.addEventListener('keydown', handleKeyDown);
+
+        respawnEnemy();
+        requestAnimationFrame(frame);
+    </script>
+</body>
+</html>
