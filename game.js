@@ -45,16 +45,16 @@ const stars = Array.from({ length: 70 }, (_, index) => ({
 
 const player = {
     x: DESIGN_SIZE / 2,
-    y: DESIGN_SIZE - 50,
-    width: 30,
-    height: 30,
+    y: DESIGN_SIZE - 60,
+    width: 28,
+    height: 36,
     speed: BASE_PLAYER_SPEED,
 };
 const bullet = {
     x: 0,
     y: 0,
-    width: 7,
-    height: 14,
+    width: 6,
+    height: 12,
     speed: BASE_BULLET_SPEED + 2,
     active: false,
 };
@@ -207,15 +207,15 @@ function resetGame() {
     score = 0;
     level = 1;
     player.x = DESIGN_SIZE / 2;
-    player.y = DESIGN_SIZE - 50;
-    player.width = 30;
-    player.height = 30;
+    player.y = DESIGN_SIZE - 60;
+    player.width = 28;
+    player.height = 36;
     player.speed = BASE_PLAYER_SPEED;
     bullet.active = false;
     bullet.x = 0;
     bullet.y = 0;
-    bullet.width = 7;
-    bullet.height = 14;
+    bullet.width = 6;
+    bullet.height = 12;
     bullet.speed = BASE_BULLET_SPEED + 2;
     spawnEnemies(level);
     startScreen.hidden = true;
@@ -295,7 +295,7 @@ function fireBullet() {
     if (!gameStarted || paused || gameOver || bullet.active) return;
     bullet.active = true;
     bullet.x = player.x;
-    bullet.y = player.y - player.height / 2 - bullet.height / 2 - 4;
+    bullet.y = player.y - 20;
 }
 
 function updateDifficulty() {
@@ -320,7 +320,7 @@ function update() {
 
     if (leftPressed) player.x -= player.speed;
     if (rightPressed) player.x += player.speed;
-    player.x = Math.max(player.width / 2, Math.min(DESIGN_SIZE - player.width / 2, player.x));
+    player.x = Math.max(10, Math.min(DESIGN_SIZE - 10, player.x));
 
     if (bullet.active) {
         bullet.y -= bullet.speed;
@@ -364,77 +364,30 @@ function finishGame() {
 }
 
 function drawPlayer() {
-    const scale = Math.max(1, player.width / 30);
     const x = player.x;
     const y = player.y;
-    ctx.fillStyle = '#68e6ff';
+    ctx.fillStyle = '#00ffff';
     ctx.beginPath();
-    ctx.moveTo(x, y - 18 * scale);
-    ctx.lineTo(x + 14 * scale, y + 6 * scale);
-    ctx.lineTo(x + 6 * scale, y + 10 * scale);
-    ctx.lineTo(x + 6 * scale, y + 16 * scale);
-    ctx.lineTo(x - 6 * scale, y + 16 * scale);
-    ctx.lineTo(x - 6 * scale, y + 10 * scale);
-    ctx.lineTo(x - 14 * scale, y + 6 * scale);
+    ctx.moveTo(x, y - player.height / 2);
+    ctx.lineTo(x - player.width / 2, y + player.height / 2);
+    ctx.lineTo(x + player.width / 2, y + player.height / 2);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#0a4d91';
-    ctx.beginPath();
-    ctx.moveTo(x - 6 * scale, y + 2 * scale);
-    ctx.lineTo(x + 6 * scale, y + 2 * scale);
-    ctx.lineTo(x + 4 * scale, y - 4 * scale);
-    ctx.lineTo(x - 4 * scale, y - 4 * scale);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#b9f7ff';
-    ctx.fillRect(x - 4 * scale, y - 14 * scale, 8 * scale, 3 * scale);
-    ctx.fillRect(x - 10 * scale, y + 8 * scale, 20 * scale, 3 * scale);
 }
 
 function drawEnemy(enemy) {
-    const scale = Math.max(1, enemy.radius / 8);
-    const x = enemy.x;
-    const y = enemy.y;
-    ctx.fillStyle = '#ff5fa2';
+    ctx.fillStyle = '#ff0000';
     ctx.beginPath();
-    ctx.moveTo(x, y - 16 * scale);
-    ctx.lineTo(x + 12 * scale, y - 4 * scale);
-    ctx.lineTo(x + 14 * scale, y + 12 * scale);
-    ctx.lineTo(x + 6 * scale, y + 16 * scale);
-    ctx.lineTo(x - 6 * scale, y + 16 * scale);
-    ctx.lineTo(x - 14 * scale, y + 12 * scale);
-    ctx.lineTo(x - 12 * scale, y - 4 * scale);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#ff2d85';
-    ctx.beginPath();
-    ctx.moveTo(x - 14 * scale, y + 8 * scale);
-    ctx.lineTo(x - 20 * scale, y + 18 * scale);
-    ctx.lineTo(x - 10 * scale, y + 12 * scale);
-    ctx.closePath();
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(x + 14 * scale, y + 8 * scale);
-    ctx.lineTo(x + 20 * scale, y + 18 * scale);
-    ctx.lineTo(x + 10 * scale, y + 12 * scale);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#ffbbc4';
-    ctx.beginPath();
-    ctx.ellipse(x, y + 2 * scale, 6 * scale, 8 * scale, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#ffd4ed';
-    ctx.beginPath();
-    ctx.arc(x, y - 6 * scale, 3 * scale, 0, Math.PI * 2);
+    ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
     ctx.fill();
 }
 
 function draw() {
-    ctx.fillStyle = '#030609';
+    ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, DESIGN_SIZE, DESIGN_SIZE);
     for (const star of stars) {
         ctx.globalAlpha = star.alpha;
-        ctx.fillStyle = '#d9ffff';
+        ctx.fillStyle = '#ffffff';
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
         ctx.fill();
@@ -443,8 +396,8 @@ function draw() {
 
     for (const enemy of enemies) drawEnemy(enemy);
     if (bullet.active) {
-        ctx.fillStyle = '#ffe56b';
-        ctx.fillRect(bullet.x - bullet.width / 2, bullet.y - bullet.height / 2, bullet.width, bullet.height);
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(bullet.x - bullet.width / 2, bullet.y - bullet.height, bullet.width, bullet.height);
     }
     drawPlayer();
 }

@@ -3,14 +3,17 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#080d12">
-    <title>Mini Shooter</title>
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-title" content="Space Shooter">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" href="icon.png">
+    <title>Space Shooter</title>
     <style>
         :root {
             color-scheme: dark;
-            font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-            background: #080d12;
-            color: #e9f3f4;
+            font-family: Arial, sans-serif;
+            background: #000000;
+            color: #ffffff;
             font-synthesis: none;
         }
 
@@ -23,98 +26,59 @@
             margin: 0;
             display: grid;
             place-items: center;
-            padding: 12px;
-            background:
-                radial-gradient(ellipse at 50% 0%, rgba(18, 58, 65, .28), transparent 55%),
-                #080d12;
+            padding: 0;
+            background: #000000;
         }
 
         main {
             width: min(100%, 600px);
         }
 
-        header {
-            display: flex;
-            align-items: end;
-            justify-content: space-between;
-            gap: 16px;
-            margin: 0 0 10px;
-        }
-
-        h1 {
-            margin: 0;
-            color: #f1f8f7;
-            font-size: 1.6rem;
-            font-weight: 700;
-        }
-
-        .eyebrow {
-            margin: 0 0 5px;
-            color: #83d9d2;
-            font-size: .7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        .score {
-            min-width: 90px;
-            color: #ffffff;
-            font-size: .8rem;
-            text-align: right;
-            text-transform: uppercase;
-        }
-
-        .score strong {
-            display: block;
-            color: #ffffff;
-            font-size: 1.4rem;
-            line-height: 1.1;
-        }
-
         .hud {
+            position: absolute;
+            z-index: 2;
+            inset: 12px 12px auto;
             display: flex;
-            align-items: center;
-            gap: 16px;
+            align-items: start;
+            justify-content: space-between;
+            color: #ffffff;
+            font: 20px Arial, sans-serif;
+            pointer-events: none;
         }
+
+        .hud-score { min-width: 90px; }
 
         .level-readout {
             min-width: 112px;
-            color: #a8b8be;
-            font-size: .7rem;
+            color: #ffffff;
+            font: 20px Arial, sans-serif;
             text-align: right;
-            text-transform: uppercase;
         }
 
-        .level-readout strong {
-            display: block;
-            color: #83d9d2;
-            font-size: 1rem;
-        }
+        .level-readout strong { font: inherit; }
 
         .progress-track {
             width: 112px;
             height: 4px;
             margin-top: 5px;
-            background: #27383e;
+            background: #333333;
         }
 
         .progress-fill {
             width: 0;
             height: 100%;
-            background: #83d9d2;
+            background: #ffffff;
             transition: width 100ms linear;
         }
 
         .stage {
             position: relative;
             overflow: hidden;
-            width: min(100%, 600px, calc(100dvh - 210px));
+            width: min(100%, 600px, calc(100dvh - 64px));
             min-width: 0;
             margin-inline: auto;
             aspect-ratio: 1;
-            border: 1px solid #27383e;
-            background: #030609;
-            box-shadow: 0 20px 70px rgba(0, 0, 0, .38);
+            background: #000000;
         }
 
         canvas {
@@ -131,8 +95,8 @@
             align-content: center;
             justify-items: center;
             gap: 14px;
-            padding: 24px;
-            background: rgba(3, 8, 11, .84);
+            padding: 12px;
+            background: rgba(0, 0, 0, .88);
             text-align: center;
         }
 
@@ -140,31 +104,30 @@
 
         .overlay h2 {
             margin: 0;
-            font-size: 2.4rem;
+            font: bold 48px Arial, sans-serif;
             line-height: 1;
         }
 
         .overlay p {
             max-width: 28rem;
             margin: 0;
-            color: #adbec2;
+            color: #ffffff;
             line-height: 1.55;
         }
 
         button {
             min-height: 44px;
-            border: 1px solid #83d9d2;
-            border-radius: 3px;
-            background: #83d9d2;
-            color: #071114;
-            font: inherit;
-            font-weight: 700;
+            border: 1px solid #ffffff;
+            border-radius: 0;
+            background: #000000;
+            color: #ffffff;
+            font: bold 16px Arial, sans-serif;
             cursor: pointer;
             touch-action: manipulation;
         }
 
-        button:hover { background: #a3eee5; }
-        button:focus-visible { outline: 3px solid #ffe56b; outline-offset: 3px; }
+        button:hover { background: #222222; }
+        button:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
 
         .overlay button { min-width: 150px; padding: 0 20px; }
 
@@ -176,112 +139,86 @@
         }
 
         .overlay .secondary-action {
-            border-color: #52656b;
-            background: #101a1e;
-            color: #e9f3f4;
+              border-color: #ffffff;
+              background: #000000;
+              color: #ffffff;
         }
 
         .controls {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            gap: 16px;
-            padding-top: 14px;
-            color: #9eafb4;
-            font-size: .82rem;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding-top: 6px;
+            color: #ffffff;
+            font: 12px Arial, sans-serif;
         }
-
-        .control-keys { color: #e9f3f4; }
 
         .touch-controls {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 6px;
+            gap: 4px;
             flex: 0 0 auto;
         }
 
         .touch-controls button {
-            width: 54px;
-            height: 48px;
+            width: 40px;
+            height: 36px;
             padding: 0;
-            border-color: #34494f;
-            background: #101a1e;
-            color: #e9f3f4;
-            font-size: 1.1rem;
+            border-color: #ffffff;
+            background: #000000;
+            color: #ffffff;
+            font: 14px Arial, sans-serif;
         }
 
         .touch-controls button[data-fire] {
-            width: 84px;
-            border-color: #bca642;
-            color: #ffe56b;
+            width: 56px;
         }
 
         .touch-controls button[data-action] {
-            width: 48px;
-            font-size: .72rem;
+            width: 42px;
+            font: 11px Arial, sans-serif;
         }
 
-        .touch-controls button[data-action="pause"] { width: 58px; }
-
-        .touch-controls button[data-move] { font-size: 1.05rem; }
+        .touch-controls button[data-action="pause"] { width: 50px; }
+        .touch-controls button[data-move] { font-size: 16px; }
 
         @media (max-width: 480px) {
-            body { padding: 8px; }
-            main { width: 100%; }
-            header { gap: 8px; }
-            h1 { font-size: 1.3rem; }
-            .hud { gap: 8px; }
-            .score { min-width: 48px; font-size: .66rem; }
-            .score strong { font-size: 1.15rem; }
-            .level-readout { min-width: 72px; font-size: .62rem; }
-            .level-readout strong { font-size: .9rem; }
+            .hud { inset: 8px 8px auto; font-size: 16px; }
+            .level-readout { font-size: 16px; }
             .progress-track { width: 72px; }
-            .stage { width: min(100%, calc(100dvh - 210px)); }
-            .controls { justify-content: center; gap: 8px; padding-top: 10px; }
+            .stage { width: min(100vw, calc(100dvh - 112px)); }
+            .controls { gap: 5px; }
             .control-hint { display: none; }
-            .controls > div:last-child { display: none; }
-            .touch-controls { gap: 8px; }
-            .touch-controls { gap: 5px; }
-            .touch-controls button { width: 38px; height: 44px; }
-            .touch-controls button[data-move] { width: 40px; }
-            .touch-controls button[data-fire] { width: 68px; }
-            .touch-controls button[data-action] { width: 38px; }
-            .touch-controls button[data-action="pause"] { width: 48px; }
-            .overlay h2 { font-size: 2rem; }
+            .touch-controls button { width: 34px; height: 34px; }
+            .touch-controls button[data-move] { width: 34px; font-size: 14px; }
+            .touch-controls button[data-fire] { width: 48px; }
+            .touch-controls button[data-action] { width: 38px; font-size: 10px; }
+            .touch-controls button[data-action="pause"] { width: 44px; }
+            .overlay h2 { font-size: 38px; }
         }
     </style>
 </head>
 <body>
     <main>
-        <header>
-            <div>
-                <p class="eyebrow">Arcade / 01</p>
-                <h1>Mini Shooter</h1>
-            </div>
-            <div class="hud" aria-live="polite">
-                <div class="score">Score<strong id="score">0</strong></div>
-                <div class="level-readout">Level<strong id="level">1 / 15</strong><div class="progress-track"><div class="progress-fill" id="level-progress"></div></div></div>
-            </div>
-        </header>
-
-        <section class="stage" aria-label="Mini Shooter game">
+        <section class="stage" aria-label="Space Shooter game">
             <canvas id="game" width="600" height="600" aria-label="Game field"></canvas>
+            <div class="hud" aria-live="polite">
+                <div class="hud-score">Score: <span id="score">0</span></div>
+                <div class="level-readout">Level: <strong id="level">1 / 15</strong><div class="progress-track"><div class="progress-fill" id="level-progress"></div></div></div>
+            </div>
             <div class="overlay" id="start-screen">
-                <p class="eyebrow">Arcade / Space Shooter</p>
-                <h2>Launch</h2>
-                <p>Clear incoming ships. Every four hits brings a faster wave.</p>
-                <button id="start-button" type="button">Start game</button>
+                <h2>SPACE SHOOTER</h2>
+                <button id="start-button" type="button">START</button>
             </div>
             <div class="overlay" id="paused-screen" hidden>
-                <p class="eyebrow">Flight suspended</p>
                 <h2>Paused</h2>
-                <p>Press P or resume when you are ready.</p>
                 <button id="resume-button" type="button">Resume</button>
             </div>
             <div class="overlay" id="game-over" hidden>
-                <p class="eyebrow">Mini Shooter</p>
-                <h2>Game over</h2>
+                <h2>GAME OVER</h2>
                 <p id="final-score">Score: 0</p>
                 <div class="overlay-actions">
                     <button id="restart-button" type="button">Play again</button>
@@ -291,7 +228,7 @@
         </section>
 
         <footer class="controls">
-            <div class="control-hint"><span class="control-keys">← → / A D</span> move <span aria-hidden="true">·</span> <span class="control-keys">Space</span> fire <span aria-hidden="true">·</span> <span class="control-keys">P</span> pause</div>
+            <div class="control-hint">Drag / ← → / A D move · Space fire · P pause</div>
             <div class="touch-controls" aria-label="Touch controls">
                 <button type="button" data-move="-1" aria-label="Move left">←</button>
                 <button type="button" data-move="1" aria-label="Move right">→</button>
@@ -300,7 +237,6 @@
                 <button type="button" id="reset-button" data-action="reset" aria-label="Reset game">Reset</button>
                 <button type="button" id="menu-button" data-action="menu" aria-label="Return to menu">Menu</button>
             </div>
-            <div>Drag to move</div>
         </footer>
     </main>
     <script src="game.js" defer></script>
