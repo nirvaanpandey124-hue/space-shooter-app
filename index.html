@@ -30,8 +30,7 @@
         }
 
         main {
-            position: relative;
-            width: min(100%, 100dvh, 600px);
+            width: min(100vw, calc(100dvh - 64px), 600px);
         }
 
         .stage {
@@ -109,35 +108,46 @@
         }
 
         .controls {
-            position: absolute;
-            right: 8px;
-            bottom: 8px;
-            z-index: 3;
-            pointer-events: none;
+            min-height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 4px 8px 0;
+            color: #ffffff;
+            font: 12px Arial, sans-serif;
         }
 
         .touch-controls {
             display: flex;
-            gap: 4px;
-            pointer-events: auto;
+            flex: 0 0 auto;
+            gap: 8px;
         }
 
         .touch-controls button {
-            width: 34px;
-            height: 28px;
+            width: 60px;
+            height: 48px;
             padding: 0;
-            border: 0;
+            border: 1px solid #ffffff;
             background: #000000;
             color: #ffffff;
-            font: 11px Arial, sans-serif;
-            opacity: .72;
+            font: 14px Arial, sans-serif;
         }
 
-        .touch-controls button[data-fire] { width: 42px; }
-        .touch-controls button[data-action="pause"] { width: 38px; }
+        .touch-controls button[data-fire] {
+            width: 88px;
+            height: 52px;
+            font-size: 16px;
+        }
+
+        .touch-controls button[data-action="pause"] { width: 64px; }
 
         @media (max-width: 480px) {
-            .overlay h2 { font-size: 25px; }
+            main { width: min(100vw, calc(100dvh - 64px)); }
+            .control-hint { display: none; }
+            .controls { justify-content: center; }
+            .touch-controls button { height: 48px; }
+            .touch-controls button[data-fire] { width: 88px; }
         }
     </style>
 </head>
@@ -150,7 +160,7 @@
             </div>
             <div class="overlay" id="game-over" hidden>
                 <h2>GAME OVER</h2>
-                <p id="final-score" hidden>Score: 0</p>
+                <p id="final-score">Score: 0</p>
                 <div class="overlay-actions">
                     <button id="restart-button" type="button">Play again</button>
                 </div>
@@ -158,6 +168,7 @@
         </section>
 
         <footer class="controls">
+            <div class="control-hint">Drag to move · ← → / A D · Space fire · P pause</div>
             <div class="touch-controls" aria-label="Touch controls">
                 <button type="button" id="fire-button" data-fire aria-label="Hold to fire">Fire</button>
                 <button type="button" id="pause-button" data-action="pause" aria-label="Pause game" aria-pressed="false">Pause</button>
