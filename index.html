@@ -30,7 +30,7 @@
         }
 
         main {
-            width: min(calc(100vw - 20px), calc(100dvh - 92px), 600px);
+            width: min(calc(100vw - 16px), calc(100dvh - 84px), 600px);
         }
 
         .stage {
@@ -128,25 +128,36 @@
         }
 
         .controls {
-            min-height: 76px;
+            height: 84px;
+            min-height: 84px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 18px;
-            padding: 8px 4px 0;
+            gap: 2px;
+            padding: 0;
             color: #ffffff;
             font: 13px Arial, sans-serif;
+        }
+
+        .control-hint {
+            height: 12px;
+            color: rgba(255, 255, 255, .72);
+            font: 10px/12px Arial, sans-serif;
+            white-space: nowrap;
         }
 
         .touch-controls {
             display: flex;
             flex: 0 0 auto;
-            gap: 12px;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
         .touch-controls button {
             width: 82px;
-            height: 54px;
+            height: 68px;
             padding: 0;
             border: 1px solid rgba(190, 232, 255, .72);
             border-radius: 16px;
@@ -158,7 +169,7 @@
 
         .touch-controls button[data-fire] {
             width: 108px;
-            height: 58px;
+            height: 68px;
             border-color: #ffe17a;
             background: linear-gradient(180deg, #ffcb4d, #df751e);
             color: #241500;
@@ -168,6 +179,7 @@
 
         .touch-controls button[data-action="pause"] {
             width: 82px;
+            height: 68px;
             border-color: #79e9ff;
             background: linear-gradient(180deg, #178eb3, #075374);
             box-shadow: 0 0 18px rgba(49, 214, 255, .38), inset 0 0 12px rgba(196, 248, 255, .16);
@@ -175,20 +187,34 @@
 
         .touch-controls button[data-action="menu"] {
             width: 82px;
+            height: 68px;
             border-color: #79e9ff;
             background: linear-gradient(180deg, #178eb3, #075374);
             box-shadow: 0 0 18px rgba(49, 214, 255, .38), inset 0 0 12px rgba(196, 248, 255, .16);
         }
 
-        @media (max-width: 500px) {
-            main { width: min(calc(100vw - 16px), calc(100dvh - 92px)); }
+        .touch-controls button[data-move] {
+            width: 68px;
+            height: 68px;
+            border-color: #79e9ff;
+            background: linear-gradient(180deg, #178eb3, #075374);
+            box-shadow: 0 0 18px rgba(49, 214, 255, .38), inset 0 0 12px rgba(196, 248, 255, .16);
+            font-size: 24px;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        @media (max-width: 700px) {
+            main { width: min(calc(100vw - 8px), calc(100dvh - 84px)); }
+            .controls { height: 84px; min-height: 84px; }
             .control-hint { display: none; }
-            .controls { min-height: 76px; }
-            .touch-controls { gap: 10px; }
-            .touch-controls button { width: 76px; height: 52px; }
-            .touch-controls button[data-fire] { width: 104px; height: 56px; }
+            .touch-controls { width: 100%; gap: 4px; }
+            .touch-controls button { width: 48px; height: 64px; }
+            .touch-controls button[data-move] { width: 46px; height: 64px; font-size: 20px; }
+            .touch-controls button[data-fire] { width: 68px; height: 64px; font-size: 14px; }
             .touch-controls button[data-action="pause"],
-            .touch-controls button[data-action="menu"] { width: 78px; }
+            .touch-controls button[data-action="menu"] { width: 54px; height: 64px; font-size: 12px; }
             .overlay p { font-size: 14px; }
         }
     </style>
@@ -219,11 +245,13 @@
         </section>
 
         <footer class="controls">
-            <div class="control-hint">Drag to move · ← → / A D · Space fire · P pause</div>
+            <div class="control-hint">◀ ▶ / ← → / A D Move · Space Fire · P Pause · M / Esc Menu</div>
             <div class="touch-controls" aria-label="Touch controls">
+                <button type="button" id="left-button" data-move="-1" aria-label="Hold to move left">◀</button>
                 <button type="button" id="fire-button" data-fire aria-label="Hold to fire">Fire</button>
                 <button type="button" id="pause-button" data-action="pause" aria-label="Pause game" aria-pressed="false">Pause</button>
                 <button type="button" id="menu-button" data-action="menu" aria-label="Open menu" aria-expanded="false">Menu</button>
+                <button type="button" id="right-button" data-move="1" aria-label="Hold to move right">▶</button>
             </div>
         </footer>
     </main>

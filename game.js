@@ -61,8 +61,6 @@ let leftPressed = false;
 let rightPressed = false;
 let fireHeld = false;
 let autoFireTimer = null;
-let dragPointer = null;
-let dragOffset = 0;
 let previousTime = 0;
 let accumulator = 0;
 let audioContext = null;
@@ -237,7 +235,6 @@ function setPaused(nextPaused) {
     paused = nextPaused;
     leftPressed = false;
     rightPressed = false;
-    dragPointer = null;
     stopAutoFire();
     pausedScreen.hidden = !paused;
     setPauseButton(paused);
@@ -663,25 +660,6 @@ menuRestartButton.addEventListener('click', resetGame);
 menuEndButton.addEventListener('click', endGameFromMenu);
 musicToggleButton.addEventListener('click', toggleMusic);
 restartButton.addEventListener('click', resetGame);
-
-canvas.addEventListener('pointerdown', (event) => {
-    unlockAudio();
-    if (!gameStarted || paused || gameOver) return;
-    event.preventDefault();
-    dragPointer = event.pointerId;
-    const bounds = canvas.getBoundingClientRect();
-    const x = ((event.clientX - bounds.left) / bounds.width) * DESIGN_SIZE;
-    dragOffset = player.x - x;
-    canvas.setPointerCapture(event.pointerId);
-});
-canvas.addEventListener('pointermove', (event) => {
-    if (dragPointer !== event.pointerId || !gameStarted || paused || gameOver) return;
-    const bounds = canvas.getBoundingClientRect();
-    player.x = Math.max(player.width / 2, Math.min(DESIGN_SIZE - player.width / 2,
-        ((event.clientX - bounds.left) / bounds.width) * DESIGN_SIZE + dragOffset));
-});
-canvas.addEventListener('pointerup', () => { dragPointer = null; });
-canvas.addEventListener('pointercancel', () => { dragPointer = null; });
 
 function handleKeyDown(event) {
     unlockAudio();
