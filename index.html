@@ -12,7 +12,7 @@
         :root {
             color-scheme: dark;
             font-family: Arial, sans-serif;
-            background: #000000;
+            background: #030711;
             color: #ffffff;
             font-synthesis: none;
         }
@@ -26,11 +26,11 @@
             margin: 0;
             display: grid;
             place-items: center;
-            background: #000000;
+            background: #030711;
         }
 
         main {
-            width: min(100vw, calc(100dvh - 64px), 600px);
+            width: min(calc(100vw - 20px), calc(100dvh - 92px), 600px);
         }
 
         .stage {
@@ -40,7 +40,7 @@
             min-width: 0;
             margin-inline: auto;
             aspect-ratio: 1;
-            background: #000000;
+            background: #030711;
         }
 
         canvas {
@@ -58,7 +58,8 @@
             justify-items: center;
             gap: 8px;
             padding: 0;
-            background: transparent;
+            background: rgba(2, 6, 16, .58);
+            backdrop-filter: blur(2px);
             text-align: center;
             pointer-events: none;
         }
@@ -67,32 +68,51 @@
 
         .overlay h2 {
             margin: 0;
-            font: bold 25px Arial, sans-serif;
+            color: #effaff;
+            font: 700 clamp(38px, 8vw, 58px) Arial, sans-serif;
             line-height: 1;
+            text-shadow: 0 0 18px rgba(73, 215, 255, .75);
         }
 
         .overlay p {
             max-width: 28rem;
             margin: 0;
             color: #ffffff;
-            font: 14px Arial, sans-serif;
+            font: 16px Arial, sans-serif;
+            text-shadow: 0 1px 4px #000000;
         }
 
         button {
-            min-height: 30px;
-            border: 1px solid #ffffff;
-            border-radius: 0;
-            background: #000000;
+            min-height: 38px;
+            border: 1px solid rgba(206, 241, 255, .76);
+            border-radius: 12px;
+            background: #091728;
             color: #ffffff;
-            font: 12px Arial, sans-serif;
+            font: 700 14px Arial, sans-serif;
             cursor: pointer;
             touch-action: manipulation;
+            box-shadow: 0 0 12px rgba(50, 185, 255, .28), inset 0 0 10px rgba(52, 182, 255, .1);
+            transition: background 120ms ease, box-shadow 120ms ease, transform 120ms ease;
         }
 
-        button:hover { background: #111111; }
+        button:hover { background: #102741; box-shadow: 0 0 18px rgba(50, 185, 255, .45); }
+        button:active { transform: translateY(1px); }
         button:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
 
-        .overlay button { min-width: 92px; padding: 0 10px; pointer-events: auto; }
+        .overlay button {
+            min-width: 168px;
+            min-height: 52px;
+            padding: 0 22px;
+            border-radius: 16px;
+            border-color: #78e8ff;
+            background: linear-gradient(180deg, #20bde9, #0873bb);
+            color: #ffffff;
+            font-size: 17px;
+            box-shadow: 0 0 24px rgba(32, 189, 233, .52);
+            pointer-events: auto;
+        }
+
+        .overlay button:hover { background: linear-gradient(180deg, #47d7fa, #118cda); }
 
         .overlay-actions {
             display: flex;
@@ -108,46 +128,60 @@
         }
 
         .controls {
-            min-height: 56px;
+            min-height: 76px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            padding: 4px 8px 0;
+            justify-content: center;
+            gap: 18px;
+            padding: 8px 4px 0;
             color: #ffffff;
-            font: 12px Arial, sans-serif;
+            font: 13px Arial, sans-serif;
         }
 
         .touch-controls {
             display: flex;
             flex: 0 0 auto;
-            gap: 8px;
+            gap: 12px;
         }
 
         .touch-controls button {
-            width: 60px;
-            height: 48px;
+            width: 82px;
+            height: 54px;
             padding: 0;
-            border: 1px solid #ffffff;
-            background: #000000;
+            border: 1px solid rgba(190, 232, 255, .72);
+            border-radius: 16px;
+            background: linear-gradient(180deg, #14283b, #081421);
             color: #ffffff;
-            font: 14px Arial, sans-serif;
+            font: 700 15px Arial, sans-serif;
+            box-shadow: 0 0 15px rgba(48, 166, 255, .22), inset 0 0 12px rgba(76, 197, 255, .09);
         }
 
         .touch-controls button[data-fire] {
-            width: 88px;
-            height: 52px;
-            font-size: 16px;
+            width: 108px;
+            height: 58px;
+            border-color: #ffe17a;
+            background: linear-gradient(180deg, #ffcb4d, #df751e);
+            color: #241500;
+            font-size: 17px;
+            box-shadow: 0 0 20px rgba(255, 177, 50, .46), inset 0 0 12px rgba(255, 255, 220, .28);
         }
 
-        .touch-controls button[data-action="pause"] { width: 64px; }
+        .touch-controls button[data-action="pause"] {
+            width: 82px;
+            border-color: #79e9ff;
+            background: linear-gradient(180deg, #178eb3, #075374);
+            box-shadow: 0 0 18px rgba(49, 214, 255, .38), inset 0 0 12px rgba(196, 248, 255, .16);
+        }
 
-        @media (max-width: 480px) {
-            main { width: min(100vw, calc(100dvh - 64px)); }
+        @media (max-width: 500px) {
+            main { width: min(calc(100vw - 16px), calc(100dvh - 92px)); }
             .control-hint { display: none; }
-            .controls { justify-content: center; }
-            .touch-controls button { height: 48px; }
-            .touch-controls button[data-fire] { width: 88px; }
+            .controls { min-height: 76px; }
+            .touch-controls { gap: 10px; }
+            .touch-controls button { width: 76px; height: 52px; }
+            .touch-controls button[data-fire] { width: 104px; height: 56px; }
+            .touch-controls button[data-action="pause"] { width: 78px; }
+            .overlay p { font-size: 14px; }
         }
     </style>
 </head>
