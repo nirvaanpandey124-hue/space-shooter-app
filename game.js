@@ -1,19 +1,10 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-const scoreValue = document.getElementById('score');
-const levelValue = document.getElementById('level');
-const progressFill = document.getElementById('level-progress');
-const startScreen = document.getElementById('start-screen');
 const pausedScreen = document.getElementById('paused-screen');
 const gameOverScreen = document.getElementById('game-over');
 const finalScore = document.getElementById('final-score');
-const startButton = document.getElementById('start-button');
 const restartButton = document.getElementById('restart-button');
-const resumeButton = document.getElementById('resume-button');
 const pauseButton = document.getElementById('pause-button');
-const resetButton = document.getElementById('reset-button');
-const menuButton = document.getElementById('menu-button');
-const gameMenuButton = document.getElementById('game-menu-button');
 const fireButton = document.getElementById('fire-button');
 
 const DESIGN_SIZE = 600;
@@ -36,13 +27,6 @@ canvas.width = DESIGN_SIZE * pixelRatio;
 canvas.height = DESIGN_SIZE * pixelRatio;
 ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
-const stars = Array.from({ length: 70 }, (_, index) => ({
-    x: (index * 137.5 + 29) % DESIGN_SIZE,
-    y: (index * 83.7 + 17) % DESIGN_SIZE,
-    radius: index % 9 === 0 ? 1.5 : 0.8,
-    alpha: 0.18 + (index % 5) * 0.08,
-}));
-
 const player = {
     x: DESIGN_SIZE / 2,
     y: DESIGN_SIZE - 50,
@@ -62,7 +46,7 @@ const bullet = {
 let enemies = [];
 let score = 0;
 let level = 1;
-let gameStarted = false;
+let gameStarted = true;
 let gameOver = false;
 let paused = false;
 let leftPressed = false;
@@ -191,12 +175,6 @@ function spawnEnemies(levelNumber) {
     }
 }
 
-function updateHud() {
-    scoreValue.textContent = String(score);
-    levelValue.textContent = `${level} / ${LEVEL_COUNT}`;
-    progressFill.style.width = `${(score % POINTS_PER_LEVEL) / POINTS_PER_LEVEL * 100}%`;
-}
-
 function resetGame() {
     gameStarted = true;
     gameOver = false;
@@ -218,28 +196,12 @@ function resetGame() {
     bullet.height = 14;
     bullet.speed = BASE_BULLET_SPEED + 2;
     spawnEnemies(level);
-    startScreen.hidden = true;
     pausedScreen.hidden = true;
     gameOverScreen.hidden = true;
     setPauseButton(false);
     previousTime = 0;
     accumulator = 0;
-    updateHud();
     unlockAudio();
-}
-
-function showMenu() {
-    gameStarted = false;
-    gameOver = false;
-    paused = false;
-    leftPressed = false;
-    rightPressed = false;
-    stopAutoFire();
-    stopMusic();
-    startScreen.hidden = false;
-    pausedScreen.hidden = true;
-    gameOverScreen.hidden = true;
-    setPauseButton(false);
 }
 
 function setPauseButton(isPaused) {
@@ -312,7 +274,6 @@ function updateDifficulty() {
     }
     bullet.speed = BASE_BULLET_SPEED + (level - 1) * BULLET_SPEED_STEP;
     player.speed = BASE_PLAYER_SPEED + (level - 1) * PLAYER_SPEED_STEP;
-    updateHud();
 }
 
 function update() {
@@ -366,8 +327,8 @@ function finishGame() {
 function drawPlayer() {
     const x = player.x;
     const y = player.y;
-    const drawWidth = 28;
-    const drawHeight = 36;
+    const drawWidth = 20;
+    const drawHeight = 20;
     ctx.fillStyle = '#00ffff';
     ctx.beginPath();
     ctx.moveTo(x, y - drawHeight / 2);
@@ -380,28 +341,25 @@ function drawPlayer() {
 function drawEnemy(enemy) {
     ctx.fillStyle = '#ff0000';
     ctx.beginPath();
-    ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+    ctx.arc(enemy.x, enemy.y, 10, 0, Math.PI * 2);
     ctx.fill();
 }
 
 function draw() {
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, DESIGN_SIZE, DESIGN_SIZE);
-    for (const star of stars) {
-        ctx.globalAlpha = star.alpha;
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-        ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-
     for (const enemy of enemies) drawEnemy(enemy);
     if (bullet.active) {
-        ctx.fillStyle = '#ffd700';
-        ctx.fillRect(bullet.x - 3, bullet.y - 6, 6, 12);
+        ctx.fillStyle = '#ffff00';
+        ctx.fillRect(bullet.x - 3, bullet.y - 10, 6, 20);
     }
     drawPlayer();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(`Score: ${score}`, 20, 40);
 }
 
 function frame(time) {
@@ -449,12 +407,7 @@ for (const button of document.querySelectorAll('[data-move]')) {
 
 setHeldButton(fireButton, startAutoFire, stopAutoFire);
 pauseButton.addEventListener('click', togglePause);
-resumeButton.addEventListener('click', () => setPaused(false));
-startButton.addEventListener('click', resetGame);
 restartButton.addEventListener('click', resetGame);
-resetButton.addEventListener('click', resetGame);
-menuButton.addEventListener('click', showMenu);
-gameMenuButton.addEventListener('click', showMenu);
 
 canvas.addEventListener('pointerdown', (event) => {
     unlockAudio();
@@ -479,7 +432,7 @@ function handleKeyDown(event) {
     unlockAudio();
     if (['ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) event.preventDefault();
     if (event.code === 'Escape') {
-        showMenu();
+        togglePause();
         return;
     }
     if (!gameStarted && (event.code === 'Enter' || event.code === 'Space')) {
@@ -518,5 +471,5 @@ window.addEventListener('resize', () => {
 });
 
 spawnEnemies(level);
-updateHud();
+draw();
 requestAnimationFrame(frame);

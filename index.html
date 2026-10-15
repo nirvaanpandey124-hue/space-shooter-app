@@ -26,55 +26,18 @@
             margin: 0;
             display: grid;
             place-items: center;
-            padding: 0;
             background: #000000;
         }
 
         main {
-            width: min(100%, 600px);
-        }
-
-        .hud {
-            position: absolute;
-            z-index: 2;
-            inset: 12px 12px auto;
-            display: flex;
-            align-items: start;
-            justify-content: space-between;
-            color: #ffffff;
-            font: 20px Arial, sans-serif;
-            pointer-events: none;
-        }
-
-        .hud-score { min-width: 90px; }
-
-        .level-readout {
-            min-width: 112px;
-            color: #ffffff;
-            font: 20px Arial, sans-serif;
-            text-align: right;
-        }
-
-        .level-readout strong { font: inherit; }
-
-        .progress-track {
-            width: 112px;
-            height: 4px;
-            margin-top: 5px;
-            background: #333333;
-        }
-
-        .progress-fill {
-            width: 0;
-            height: 100%;
-            background: #ffffff;
-            transition: width 100ms linear;
+            position: relative;
+            width: min(100%, 100dvh, 600px);
         }
 
         .stage {
             position: relative;
             overflow: hidden;
-            width: min(100%, 600px, calc(100dvh - 64px));
+            width: 100%;
             min-width: 0;
             margin-inline: auto;
             aspect-ratio: 1;
@@ -94,17 +57,18 @@
             display: grid;
             align-content: center;
             justify-items: center;
-            gap: 14px;
-            padding: 12px;
-            background: rgba(0, 0, 0, .88);
+            gap: 8px;
+            padding: 0;
+            background: transparent;
             text-align: center;
+            pointer-events: none;
         }
 
         .overlay[hidden] { display: none; }
 
         .overlay h2 {
             margin: 0;
-            font: bold 48px Arial, sans-serif;
+            font: bold 25px Arial, sans-serif;
             line-height: 1;
         }
 
@@ -112,24 +76,24 @@
             max-width: 28rem;
             margin: 0;
             color: #ffffff;
-            line-height: 1.55;
+            font: 14px Arial, sans-serif;
         }
 
         button {
-            min-height: 44px;
+            min-height: 30px;
             border: 1px solid #ffffff;
             border-radius: 0;
             background: #000000;
             color: #ffffff;
-            font: bold 16px Arial, sans-serif;
+            font: 12px Arial, sans-serif;
             cursor: pointer;
             touch-action: manipulation;
         }
 
-        button:hover { background: #222222; }
+        button:hover { background: #111111; }
         button:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
 
-        .overlay button { min-width: 150px; padding: 0 20px; }
+        .overlay button { min-width: 92px; padding: 0 10px; pointer-events: auto; }
 
         .overlay-actions {
             display: flex;
@@ -139,65 +103,41 @@
         }
 
         .overlay .secondary-action {
-              border-color: #ffffff;
-              background: #000000;
-              color: #ffffff;
+            border-color: #ffffff;
+            background: #000000;
+            color: #ffffff;
         }
 
         .controls {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            justify-content: center;
-            flex-wrap: wrap;
-            padding-top: 6px;
-            color: #ffffff;
-            font: 12px Arial, sans-serif;
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            z-index: 3;
+            pointer-events: none;
         }
 
         .touch-controls {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
             gap: 4px;
-            flex: 0 0 auto;
+            pointer-events: auto;
         }
 
         .touch-controls button {
-            width: 40px;
-            height: 36px;
+            width: 34px;
+            height: 28px;
             padding: 0;
-            border-color: #ffffff;
+            border: 0;
             background: #000000;
             color: #ffffff;
-            font: 14px Arial, sans-serif;
-        }
-
-        .touch-controls button[data-fire] {
-            width: 56px;
-        }
-
-        .touch-controls button[data-action] {
-            width: 42px;
             font: 11px Arial, sans-serif;
+            opacity: .72;
         }
 
-        .touch-controls button[data-action="pause"] { width: 50px; }
-        .touch-controls button[data-move] { font-size: 16px; }
+        .touch-controls button[data-fire] { width: 42px; }
+        .touch-controls button[data-action="pause"] { width: 38px; }
 
         @media (max-width: 480px) {
-            .hud { inset: 8px 8px auto; font-size: 16px; }
-            .level-readout { font-size: 16px; }
-            .progress-track { width: 72px; }
-            .stage { width: min(100vw, calc(100dvh - 112px)); }
-            .controls { gap: 5px; }
-            .control-hint { display: none; }
-            .touch-controls button { width: 34px; height: 34px; }
-            .touch-controls button[data-move] { width: 34px; font-size: 14px; }
-            .touch-controls button[data-fire] { width: 48px; }
-            .touch-controls button[data-action] { width: 38px; font-size: 10px; }
-            .touch-controls button[data-action="pause"] { width: 44px; }
-            .overlay h2 { font-size: 38px; }
+            .overlay h2 { font-size: 25px; }
         }
     </style>
 </head>
@@ -205,37 +145,22 @@
     <main>
         <section class="stage" aria-label="Space Shooter game">
             <canvas id="game" width="600" height="600" aria-label="Game field"></canvas>
-            <div class="hud" aria-live="polite">
-                <div class="hud-score">Score: <span id="score">0</span></div>
-                <div class="level-readout">Level: <strong id="level">1 / 15</strong><div class="progress-track"><div class="progress-fill" id="level-progress"></div></div></div>
-            </div>
-            <div class="overlay" id="start-screen">
-                <h2>SPACE SHOOTER</h2>
-                <button id="start-button" type="button">START</button>
-            </div>
             <div class="overlay" id="paused-screen" hidden>
-                <h2>Paused</h2>
-                <button id="resume-button" type="button">Resume</button>
+                <h2>PAUSED</h2>
             </div>
             <div class="overlay" id="game-over" hidden>
                 <h2>GAME OVER</h2>
-                <p id="final-score">Score: 0</p>
+                <p id="final-score" hidden>Score: 0</p>
                 <div class="overlay-actions">
                     <button id="restart-button" type="button">Play again</button>
-                    <button class="secondary-action" id="game-menu-button" type="button">Menu</button>
                 </div>
             </div>
         </section>
 
         <footer class="controls">
-            <div class="control-hint">Drag / ← → / A D move · Space fire · P pause</div>
             <div class="touch-controls" aria-label="Touch controls">
-                <button type="button" data-move="-1" aria-label="Move left">←</button>
-                <button type="button" data-move="1" aria-label="Move right">→</button>
                 <button type="button" id="fire-button" data-fire aria-label="Hold to fire">Fire</button>
                 <button type="button" id="pause-button" data-action="pause" aria-label="Pause game" aria-pressed="false">Pause</button>
-                <button type="button" id="reset-button" data-action="reset" aria-label="Reset game">Reset</button>
-                <button type="button" id="menu-button" data-action="menu" aria-label="Return to menu">Menu</button>
             </div>
         </footer>
     </main>
