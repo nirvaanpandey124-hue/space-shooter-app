@@ -1,4 +1,4 @@
-const CACHE_NAME = 'space-shooter-pwa-v1';
+const CACHE_NAME = 'space-shooter-pwa-v3';
 const APP_FILES = [
     './',
     './index.html',

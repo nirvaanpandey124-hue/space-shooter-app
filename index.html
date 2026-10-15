@@ -25,26 +25,26 @@
 
         body {
             min-width: 0;
-            min-height: 100vh;
-            min-height: 100dvh;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
             margin: 0;
-            display: grid;
-            place-items: center;
-            padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+            overflow: hidden;
             background: #030711;
         }
 
         main {
-            width: min(calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 16px), calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 84px), 600px);
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
         }
 
         .stage {
-            position: relative;
+            position: absolute;
+            inset: 0;
             overflow: hidden;
-            width: 100%;
-            min-width: 0;
-            margin-inline: auto;
-            aspect-ratio: 1;
             background: #030711;
         }
 
@@ -133,31 +133,43 @@
         }
 
         .controls {
-            height: 84px;
-            min-height: 84px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 2px;
-            padding: 0;
-            color: #ffffff;
-            font: 13px Arial, sans-serif;
+            position: absolute;
+            inset: 0;
+            z-index: 4;
+            pointer-events: none;
         }
 
         .control-hint {
-            height: 12px;
-            color: rgba(255, 255, 255, .72);
-            font: 10px/12px Arial, sans-serif;
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip-path: inset(50%);
             white-space: nowrap;
         }
 
         .touch-controls {
+            position: absolute;
             display: flex;
-            flex: 0 0 auto;
             align-items: center;
-            justify-content: center;
             gap: 10px;
+            pointer-events: none;
+        }
+
+        .move-controls {
+            left: calc(env(safe-area-inset-left, 0px) + 14px);
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+        }
+
+        .action-controls {
+            right: calc(env(safe-area-inset-right, 0px) + 14px);
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+        }
+
+        .top-controls {
+            top: calc(env(safe-area-inset-top, 0px) + 14px);
+            right: calc(env(safe-area-inset-right, 0px) + 14px);
+            gap: 8px;
         }
 
         .touch-controls button {
@@ -170,6 +182,7 @@
             color: #ffffff;
             font: 700 15px Arial, sans-serif;
             box-shadow: 0 0 15px rgba(48, 166, 255, .22), inset 0 0 12px rgba(76, 197, 255, .09);
+            pointer-events: auto;
         }
 
         .touch-controls button[data-fire] {
@@ -214,7 +227,9 @@
             position: fixed;
             z-index: 10;
             top: calc(env(safe-area-inset-top, 0px) + 8px);
-            right: calc(env(safe-area-inset-right, 0px) + 8px);
+            left: 50%;
+            right: auto;
+            transform: translateX(-50%);
             display: flex;
             align-items: center;
             gap: 8px;
@@ -250,15 +265,14 @@
         }
 
         @media (max-width: 700px) {
-            main { width: min(calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 8px), calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 84px)); }
-            .controls { height: 84px; min-height: 84px; }
-            .control-hint { display: none; }
-            .touch-controls { width: 100%; gap: 4px; }
+            .move-controls { gap: 6px; }
+            .action-controls { gap: 6px; }
+            .top-controls { gap: 6px; }
             .touch-controls button { width: 48px; height: 64px; }
             .touch-controls button[data-move] { width: 46px; height: 64px; font-size: 20px; }
             .touch-controls button[data-fire] { width: 68px; height: 64px; font-size: 14px; }
             .touch-controls button[data-action="pause"],
-            .touch-controls button[data-action="menu"] { width: 54px; height: 64px; font-size: 12px; }
+            .touch-controls button[data-action="menu"] { width: 58px; height: 48px; font-size: 12px; }
             .overlay p { font-size: 14px; }
         }
     </style>
@@ -293,16 +307,20 @@
             </div>
         </section>
 
-        <footer class="controls">
+        <div class="controls">
             <div class="control-hint">◀ ▶ / ← → / A D Move · Space Fire · P Pause · M / Esc Menu</div>
-            <div class="touch-controls" aria-label="Touch controls">
+            <div class="touch-controls move-controls" aria-label="Move controls">
                 <button type="button" id="left-button" data-move="-1" aria-label="Hold to move left">◀</button>
-                <button type="button" id="fire-button" data-fire aria-label="Hold to fire">Fire</button>
-                <button type="button" id="pause-button" data-action="pause" aria-label="Pause game" aria-pressed="false">Pause</button>
-                <button type="button" id="menu-button" data-action="menu" aria-label="Open menu" aria-expanded="false">Menu</button>
                 <button type="button" id="right-button" data-move="1" aria-label="Hold to move right">▶</button>
             </div>
-        </footer>
+            <div class="touch-controls action-controls" aria-label="Game controls">
+                <button type="button" id="fire-button" data-fire aria-label="Hold to fire">Fire</button>
+            </div>
+            <div class="touch-controls top-controls" aria-label="Pause and menu controls">
+                <button type="button" id="pause-button" data-action="pause" aria-label="Pause game" aria-pressed="false">Pause</button>
+                <button type="button" id="menu-button" data-action="menu" aria-label="Open menu" aria-expanded="false">Menu</button>
+            </div>
+        </div>
     </main>
     <script src="game.js" defer></script>
     <script>

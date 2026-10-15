@@ -13,7 +13,8 @@ const menuEndButton = document.getElementById('menu-end-button');
 const musicToggleButton = document.getElementById('music-toggle-button');
 const fireButton = document.getElementById('fire-button');
 
-const DESIGN_SIZE = 600;
+const WORLD_HEIGHT = 600;
+let worldWidth = WORLD_HEIGHT;
 const LEVEL_COUNT = 15;
 const POINTS_PER_LEVEL = 4;
 const BASE_ENEMY_SPEED = 2;
@@ -28,14 +29,11 @@ const PLAYER_SPEED_STEP = 0.08;
 const FIXED_STEP = 1 / 60;
 const MAX_ENEMIES = 64;
 
-const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-canvas.width = DESIGN_SIZE * pixelRatio;
-canvas.height = DESIGN_SIZE * pixelRatio;
-ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+let pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
 
 const player = {
-    x: DESIGN_SIZE / 2,
-    y: DESIGN_SIZE - 50,
+    x: worldWidth / 2,
+    y: WORLD_HEIGHT - 50,
     width: 30,
     height: 30,
     speed: BASE_PLAYER_SPEED,
@@ -70,15 +68,29 @@ let melodyIndex = 0;
 
 const melody = [330, 392, 440, 392, 330, 294, 262, 294];
 const rhythm = [0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.28, 0.4];
-const stars = Array.from({ length: 72 }, (_, index) => ({
-    x: (index * 137.5 + 29) % DESIGN_SIZE,
-    y: (index * 83.7 + 17) % DESIGN_SIZE,
-    radius: index % 11 === 0 ? 1.35 : 0.65,
-    speed: 3 + index % 7,
-    alpha: 0.2 + (index % 5) * 0.09,
-}));
+let stars = [];
 let explosions = [];
 let visualTime = 0;
+
+function resizeWorld() {
+    const bounds = canvas.getBoundingClientRect();
+    pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    worldWidth = WORLD_HEIGHT * (bounds.width / bounds.height);
+    canvas.width = Math.round(bounds.width * pixelRatio);
+    canvas.height = Math.round(bounds.height * pixelRatio);
+    const unitScale = pixelRatio * bounds.height / WORLD_HEIGHT;
+    ctx.setTransform(unitScale, 0, 0, unitScale, 0, 0);
+    const starCount = Math.max(72, Math.round(72 * worldWidth / WORLD_HEIGHT));
+    stars = Array.from({ length: starCount }, (_, index) => ({
+        x: (index * 137.5 + 29) % worldWidth,
+        y: (index * 83.7 + 17) % WORLD_HEIGHT,
+        radius: index % 11 === 0 ? 1.35 : 0.65,
+        speed: 3 + index % 7,
+        alpha: 0.2 + (index % 5) * 0.09,
+    }));
+    player.x = Math.max(player.width / 2, Math.min(worldWidth - player.width / 2, player.x));
+    if (enemies.length) syncEnemyPopulation();
+}
 
 function setButtonState(button, pressed) {
     button.classList.toggle('active', pressed);
@@ -176,7 +188,7 @@ function playDeathSound() {
 function createEnemy(levelNumber) {
     const radius = Math.max(MIN_ENEMY_RADIUS, BASE_ENEMY_RADIUS + (levelNumber - 1) * ENEMY_RADIUS_STEP);
     return {
-        x: Math.random() * (DESIGN_SIZE - radius * 2) + radius,
+        x: Math.random() * (worldWidth - radius * 2) + radius,
         y: -radius - Math.random() * 120,
         radius,
         speed: BASE_ENEMY_SPEED + (levelNumber - 1) * ENEMY_SPEED_STEP,
@@ -185,9 +197,20 @@ function createEnemy(levelNumber) {
 
 function spawnEnemies(levelNumber) {
     enemies = [];
-    for (let index = 0; index < 5; index += 1) {
+    const count = enemyCountForViewport();
+    for (let index = 0; index < count; index += 1) {
         enemies.push(createEnemy(levelNumber));
     }
+}
+
+function enemyCountForViewport() {
+    return Math.min(MAX_ENEMIES, Math.max(5, Math.round(5 * worldWidth / WORLD_HEIGHT)));
+}
+
+function syncEnemyPopulation() {
+    const targetCount = enemyCountForViewport();
+    while (enemies.length < targetCount) enemies.push(createEnemy(level));
+    if (enemies.length > targetCount) enemies.length = targetCount;
 }
 
 function resetGame() {
@@ -201,8 +224,8 @@ function resetGame() {
     stopAutoFire();
     score = 0;
     level = 1;
-    player.x = DESIGN_SIZE / 2;
-    player.y = DESIGN_SIZE - 50;
+    player.x = worldWidth / 2;
+    player.y = WORLD_HEIGHT - 50;
     player.width = 30;
     player.height = 30;
     player.speed = BASE_PLAYER_SPEED;
@@ -343,7 +366,7 @@ function update() {
 
     if (leftPressed) player.x -= player.speed;
     if (rightPressed) player.x += player.speed;
-    player.x = Math.max(player.width / 2, Math.min(DESIGN_SIZE - player.width / 2, player.x));
+    player.x = Math.max(player.width / 2, Math.min(worldWidth - player.width / 2, player.x));
 
     if (bullet.active) {
         bullet.y -= bullet.speed;
@@ -352,9 +375,9 @@ function update() {
 
     for (const enemy of enemies) {
         enemy.y += enemy.speed;
-        if (enemy.y - enemy.radius > DESIGN_SIZE) {
+        if (enemy.y - enemy.radius > WORLD_HEIGHT) {
             enemy.y = -enemy.radius;
-            enemy.x = Math.random() * (DESIGN_SIZE - enemy.radius * 2) + enemy.radius;
+            enemy.x = Math.random() * (worldWidth - enemy.radius * 2) + enemy.radius;
         }
     }
 
@@ -577,10 +600,10 @@ function drawExplosions() {
 
 function draw() {
     ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, DESIGN_SIZE, DESIGN_SIZE);
+    ctx.fillRect(0, 0, worldWidth, WORLD_HEIGHT);
 
     for (const star of stars) {
-        const starY = (star.y + visualTime * star.speed) % DESIGN_SIZE;
+        const starY = (star.y + visualTime * star.speed) % WORLD_HEIGHT;
         const flicker = 0.78 + Math.sin(visualTime * 2 + star.x) * 0.22;
         ctx.globalAlpha = star.alpha * flicker;
         ctx.fillStyle = '#d9e9ff';
@@ -696,14 +719,12 @@ function handleKeyUp(event) {
 window.addEventListener('keydown', handleKeyDown);
 window.addEventListener('keyup', handleKeyUp);
 window.addEventListener('pointerdown', unlockAudio, { once: true });
-window.addEventListener('resize', () => {
-    const nextRatio = Math.min(window.devicePixelRatio || 1, 2);
-    if (nextRatio === pixelRatio) return;
-    canvas.width = DESIGN_SIZE * nextRatio;
-    canvas.height = DESIGN_SIZE * nextRatio;
-    ctx.setTransform(nextRatio, 0, 0, nextRatio, 0, 0);
-});
+window.addEventListener('resize', resizeWorld);
+window.addEventListener('orientationchange', resizeWorld);
+window.visualViewport?.addEventListener('resize', resizeWorld);
 
+resizeWorld();
+player.x = worldWidth / 2;
 spawnEnemies(level);
 draw();
 requestAnimationFrame(frame);
