@@ -1,10 +1,16 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const pausedScreen = document.getElementById('paused-screen');
+const menuScreen = document.getElementById('menu-screen');
 const gameOverScreen = document.getElementById('game-over');
 const finalScore = document.getElementById('final-score');
 const restartButton = document.getElementById('restart-button');
 const pauseButton = document.getElementById('pause-button');
+const menuButton = document.getElementById('menu-button');
+const menuResumeButton = document.getElementById('menu-resume-button');
+const menuRestartButton = document.getElementById('menu-restart-button');
+const menuEndButton = document.getElementById('menu-end-button');
+const musicToggleButton = document.getElementById('music-toggle-button');
 const fireButton = document.getElementById('fire-button');
 
 const DESIGN_SIZE = 600;
@@ -49,6 +55,8 @@ let level = 1;
 let gameStarted = true;
 let gameOver = false;
 let paused = false;
+let menuOpen = false;
+let musicEnabled = true;
 let leftPressed = false;
 let rightPressed = false;
 let fireHeld = false;
@@ -86,7 +94,7 @@ function initializeAudio() {
     try {
         audioContext = new AudioContextClass();
         musicGain = audioContext.createGain();
-        musicGain.gain.value = 0.24;
+        musicGain.gain.value = musicEnabled ? 0.24 : 0;
         musicGain.connect(audioContext.destination);
     } catch {
         audioContext = null;
@@ -188,6 +196,7 @@ function resetGame() {
     gameStarted = true;
     gameOver = false;
     paused = false;
+    menuOpen = false;
     explosions = [];
     leftPressed = false;
     rightPressed = false;
@@ -206,6 +215,8 @@ function resetGame() {
     bullet.height = 14;
     bullet.speed = BASE_BULLET_SPEED + 2;
     spawnEnemies(level);
+    menuScreen.hidden = true;
+    menuButton.setAttribute('aria-expanded', 'false');
     pausedScreen.hidden = true;
     gameOverScreen.hidden = true;
     setPauseButton(false);
@@ -222,7 +233,7 @@ function setPauseButton(isPaused) {
 }
 
 function setPaused(nextPaused) {
-    if (!gameStarted || gameOver) return;
+    if (!gameStarted || gameOver || (menuOpen && !nextPaused)) return;
     paused = nextPaused;
     leftPressed = false;
     rightPressed = false;
@@ -237,7 +248,47 @@ function setPaused(nextPaused) {
 }
 
 function togglePause() {
+    if (menuOpen) return;
     setPaused(!paused);
+}
+
+function openMenu() {
+    if (!gameStarted || gameOver || menuOpen) return;
+    menuOpen = true;
+    setPaused(true);
+    pausedScreen.hidden = true;
+    menuScreen.hidden = false;
+    menuButton.setAttribute('aria-expanded', 'true');
+}
+
+function closeMenu() {
+    if (!menuOpen) return;
+    menuOpen = false;
+    menuScreen.hidden = true;
+    pausedScreen.hidden = true;
+    menuButton.setAttribute('aria-expanded', 'false');
+    setPaused(false);
+}
+
+function toggleMusic() {
+    musicEnabled = !musicEnabled;
+    initializeAudio();
+    if (audioContext && musicGain) {
+        musicGain.gain.setTargetAtTime(musicEnabled ? 0.24 : 0, audioContext.currentTime, 0.025);
+    }
+    musicToggleButton.textContent = musicEnabled ? 'Music On' : 'Music Off';
+    musicToggleButton.setAttribute('aria-pressed', String(musicEnabled));
+}
+
+function endGameFromMenu() {
+    if (!menuOpen) return;
+    menuOpen = false;
+    menuScreen.hidden = true;
+    paused = false;
+    pausedScreen.hidden = true;
+    menuButton.setAttribute('aria-expanded', 'false');
+    setPauseButton(false);
+    finishGame();
 }
 
 function startAutoFire() {
@@ -606,6 +657,11 @@ for (const button of document.querySelectorAll('[data-move]')) {
 
 setHeldButton(fireButton, startAutoFire, stopAutoFire);
 pauseButton.addEventListener('click', togglePause);
+menuButton.addEventListener('click', openMenu);
+menuResumeButton.addEventListener('click', closeMenu);
+menuRestartButton.addEventListener('click', resetGame);
+menuEndButton.addEventListener('click', endGameFromMenu);
+musicToggleButton.addEventListener('click', toggleMusic);
 restartButton.addEventListener('click', resetGame);
 
 canvas.addEventListener('pointerdown', (event) => {
@@ -630,8 +686,9 @@ canvas.addEventListener('pointercancel', () => { dragPointer = null; });
 function handleKeyDown(event) {
     unlockAudio();
     if (['ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) event.preventDefault();
-    if (event.code === 'Escape') {
-        togglePause();
+    if (event.code === 'Escape' || event.code === 'KeyM') {
+        if (menuOpen) closeMenu();
+        else openMenu();
         return;
     }
     if (!gameStarted && (event.code === 'Enter' || event.code === 'Space')) {

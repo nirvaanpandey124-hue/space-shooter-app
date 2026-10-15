@@ -173,6 +173,13 @@
             box-shadow: 0 0 18px rgba(49, 214, 255, .38), inset 0 0 12px rgba(196, 248, 255, .16);
         }
 
+        .touch-controls button[data-action="menu"] {
+            width: 82px;
+            border-color: #79e9ff;
+            background: linear-gradient(180deg, #178eb3, #075374);
+            box-shadow: 0 0 18px rgba(49, 214, 255, .38), inset 0 0 12px rgba(196, 248, 255, .16);
+        }
+
         @media (max-width: 500px) {
             main { width: min(calc(100vw - 16px), calc(100dvh - 92px)); }
             .control-hint { display: none; }
@@ -180,7 +187,8 @@
             .touch-controls { gap: 10px; }
             .touch-controls button { width: 76px; height: 52px; }
             .touch-controls button[data-fire] { width: 104px; height: 56px; }
-            .touch-controls button[data-action="pause"] { width: 78px; }
+            .touch-controls button[data-action="pause"],
+            .touch-controls button[data-action="menu"] { width: 78px; }
             .overlay p { font-size: 14px; }
         }
     </style>
@@ -191,6 +199,15 @@
             <canvas id="game" width="600" height="600" aria-label="Game field"></canvas>
             <div class="overlay" id="paused-screen" hidden>
                 <h2>PAUSED</h2>
+            </div>
+            <div class="overlay" id="menu-screen" hidden>
+                <h2>MENU</h2>
+                <div class="overlay-actions">
+                    <button id="menu-resume-button" type="button">Resume</button>
+                    <button id="menu-restart-button" type="button">Restart</button>
+                    <button id="menu-end-button" type="button">End Game</button>
+                    <button id="music-toggle-button" type="button" aria-pressed="true">Music On</button>
+                </div>
             </div>
             <div class="overlay" id="game-over" hidden>
                 <h2>GAME OVER</h2>
@@ -206,6 +223,7 @@
             <div class="touch-controls" aria-label="Touch controls">
                 <button type="button" id="fire-button" data-fire aria-label="Hold to fire">Fire</button>
                 <button type="button" id="pause-button" data-action="pause" aria-label="Pause game" aria-pressed="false">Pause</button>
+                <button type="button" id="menu-button" data-action="menu" aria-label="Open menu" aria-expanded="false">Menu</button>
             </div>
         </footer>
     </main>
